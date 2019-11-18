@@ -12,13 +12,16 @@ class Variable(Node):
     def do(self):
         return self.value
 
-    def backpropaate(self, grad):
+    def backpropagate(self, grad):
         return ()
 
 
 class Placeholder(Node):
     def __init__(self, shape, batched):
         super(Placeholder, self).__init__(shape, batched)
+
+    def backpropagate(self, grad):
+        return ()
 
 
 class Constant(Node):
