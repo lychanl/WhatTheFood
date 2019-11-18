@@ -1,6 +1,7 @@
 from whatthefood.graph.basic import *
 from whatthefood.graph.vars import *
 from whatthefood.graph.conv import *
+from whatthefood.graph.matmul import *
 
 from whatthefood.graph.grad import *
 
