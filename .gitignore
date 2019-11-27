@@ -105,5 +105,5 @@ venv.bak/
 
 
 .idea/ 
-data/
+/data/
 tools/
