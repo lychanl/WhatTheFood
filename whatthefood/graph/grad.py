@@ -6,8 +6,11 @@ import numpy as np
 
 class Grad(Node):
     def __init__(self, y, xs):
+        self.unwrap = False
+
         if not isinstance(xs, Sequence):
             xs = [xs]
+            self.unwrap = True
 
         self.outputs_graph = self._build_outputs_graph(y, xs)
         self.outputs_graph_flattened = self._flatten_outputs_graph(self.outputs_graph)
@@ -38,7 +41,7 @@ class Grad(Node):
             if op in self.xs:
                 ret[self.xs.index(op)] = grad
 
-        return ret
+        return ret[0] if self.unwrap else ret
 
     def _build_outputs_graph(self, y, xs):
         outputs = {}
