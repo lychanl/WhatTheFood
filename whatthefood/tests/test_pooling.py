@@ -138,7 +138,7 @@ class TestOps(unittest.TestCase):
         )
 
     def test_max_pooling_grad(self):
-        x = graph.Placeholder(self.x.shape, batched=True)
+        x = graph.Constant(self.x)
 
         y = graph.MaxPooling2d(x, 2, 2)
         y_step_1 = graph.MaxPooling2d(x, 2, 1)
@@ -150,7 +150,7 @@ class TestOps(unittest.TestCase):
         np.testing.assert_array_equal(self.grad_step_1, graph.run(gx_step_1))
 
     def test_max_pooling_grad_batched(self):
-        x = graph.Constant(self.x)
+        x = graph.Placeholder(self.x.shape, batched=True)
 
         y = graph.MaxPooling2d(x, 2, 2)
         y_step_1 = graph.MaxPooling2d(x, 2, 1)
@@ -158,6 +158,6 @@ class TestOps(unittest.TestCase):
         gx = graph.Grad(y, x)
         gx_step_1 = graph.Grad(y_step_1, x)
 
-        np.testing.assert_array_equal(self.grad, graph.run(gx))
-        np.testing.assert_array_equal(self.grad_step_1, graph.run(gx_step_1))
+        np.testing.assert_array_equal([self.grad, self.grad], graph.run(gx, {x: np.array([self.x, 2 * self.x])}))
+        np.testing.assert_array_equal([self.grad_step_1, self.grad_step_1], graph.run(gx_step_1, {x: np.array([self.x, 2 * self.x])}))
 

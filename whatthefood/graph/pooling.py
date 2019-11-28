@@ -35,9 +35,21 @@ class MaxPooling2d(Node):
 
         for i in range(0, x.shape[-3] - self.window_size + 1, self.step):
             for j in range(0, x.shape[-2] - self.window_size + 1, self.step):
-                out_slice = (slice(None), i // self.step, j // self.step, slice(None))\
+                out_slice =\
+                    (
+                        slice(None),
+                        slice(i // self.step, i // self.step + 1),
+                        slice(j // self.step, j // self.step + 1),
+                        slice(None)
+                    )\
                     if self.batched else (i // self.step, j // self.step, slice(None))
-                in_slice = (slice(None), slice(i, i + self.window_size), slice(j, j + self.window_size), slice(None))\
+                in_slice =\
+                    (
+                        slice(None),
+                        slice(i, i + self.window_size),
+                        slice(j, j + self.window_size),
+                        slice(None)
+                    )\
                     if self.batched else (slice(i, i + self.window_size), slice(j, j + self.window_size), slice(None))
                 out[in_slice] += (y[out_slice] == x[in_slice]) * grad[out_slice]
 
