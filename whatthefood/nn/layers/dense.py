@@ -11,13 +11,12 @@ class Dense(Layer):
 
         self.kernel = graph.Variable((x.shape[0], n))
 
-        if bias:
-            self.bias = graph.Variable((n,))
+        self.bias = graph.Variable((n,)) if bias else None
 
-        y = x * self.kernel
+        y = graph.Matmul(x, self.kernel)
 
         if bias:
-            y = y + self.bias
+            y = graph.Sum(y, self.bias)
 
         if activation:
             y = activation(y, *activation_args, **activation_kwargs)
