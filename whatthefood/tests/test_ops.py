@@ -36,6 +36,26 @@ class TestOps(unittest.TestCase):
         np.testing.assert_array_equal(g_x, np.matmul(np.ones_like(mv), y_arr.T))
         np.testing.assert_array_equal(g_y, np.matmul(x_arr.T, np.ones_like(mv)))
 
+    def test_matmul_vec(self):
+        x = graph.Constant([1, 2, 3])
+        y = graph.Constant([[1, 2], [1, 3], [2, 4]])
+
+        m = graph.Matmul(x, y)
+
+        np.testing.assert_array_equal([9, 20], graph.run(m))
+
+    def test_matmul_vec_grad(self):
+        x = graph.Constant([1, 2, 3])
+        y = graph.Constant([[1, 2], [1, 3], [2, 4]])
+
+        m = graph.Matmul(x, y)
+        g = graph.Grad(m, [x, y])
+
+        g_x, g_y = graph.run(g)
+
+        np.testing.assert_array_equal([3, 4, 6], g_x)
+        np.testing.assert_array_equal([[1, 1], [2, 2], [3, 3]], g_y)
+
     def test_relu(self):
         x = graph.Constant([[1, 2, -3, 4], [-1, 2, -3, 0]])
         y = graph.ReLU(x)
