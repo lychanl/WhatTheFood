@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 import numpy as np
 
 from whatthefood.graph.node import Node
@@ -45,3 +47,67 @@ class MultiplyByScalar(Node):
 
     def backpropagate(self, grad, x, scalar):
         return grad * scalar, np.sum(grad * x)
+
+
+class Reduce(Node):
+    def __init__(self, x, axis=None, reduce_batching=None):
+        if axis is not None:
+            if isinstance(axis, Sequence):
+                assert max(axis) < len(x.shape) and min(axis) >= -len(x.shape)
+                out_shape = tuple(d for i, d in enumerate(x.shape) if i not in axis and i - len(x.shape) not in axis)
+            else:
+                assert -len(x.shape) <= axis < len(x.shape)
+                out_shape = x.shape[:axis] + x.shape[(axis + 1):]
+                axis = axis,
+        else:
+            out_shape = ()
+            axis = tuple(range(len(x.shape)))
+
+        self.axis = axis
+
+        if reduce_batching:
+            assert x.batched
+
+        if reduce_batching is None:
+            reduce_batching = x.batched
+
+        if x.batched:
+            self.axis = tuple([a + 1 if a >= 0 else a for a in self.axis])
+            if reduce_batching:
+                self.axis = (0,) + self.axis
+
+        super(Reduce, self).__init__(
+            out_shape,
+            x.batched and not reduce_batching,
+            x
+        )
+
+        self.reduce_batching = reduce_batching
+        self.grad_shape = tuple(d if i not in axis and i - len(x.shape) not in axis else 1 for i, d in enumerate(x.shape))
+        if self.batched and x.batched:
+            self.grad_shape = (-1,) + self.grad_shape
+        elif x.batched:
+            self.grad_shape = (1,) + self.grad_shape
+
+
+class ReduceSum(Reduce):
+    def do(self, x):
+        return np.sum(x, self.axis)
+
+    def backpropagate(self, grad, x):
+        return np.broadcast_to(grad.reshape(self.grad_shape), x.shape),
+
+
+class ReduceMean(Reduce):
+    def do(self, x):
+        return np.mean(x, self.axis)
+
+    def _get_divisor(self, x):
+        v = 1
+        for d in self.axis:
+            v *= x.shape[d]
+
+        return v
+
+    def backpropagate(self, grad, x):
+        return np.broadcast_to(grad.reshape(self.grad_shape), x.shape) / self._get_divisor(x),
