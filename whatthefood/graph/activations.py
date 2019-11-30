@@ -12,3 +12,10 @@ class ReLU(Node):
 
     def backpropagate(self, grad, x):
         return (x >= 0) * grad + (x < 0) * self.alpha * grad,
+
+
+def leaky_relu(alpha=0.2):
+    def builder(x):
+        return ReLU(x, alpha)
+
+    return builder
