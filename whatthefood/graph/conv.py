@@ -4,16 +4,18 @@ import numpy as np
 
 
 class Convolution(Node):
-    def __init__(self, x, filters):
+    def __init__(self, x, filters, step=1):
         assert len(x.shape) == 3 and len(filters.shape) == 4
         assert filters.shape[2] == x.shape[2]
         assert not filters.batched
         shape = (
-            x.shape[0] - filters.shape[0] + 1,
-            x.shape[1] - filters.shape[1] + 1,
+            (x.shape[0] - filters.shape[0]) // step + 1,
+            (x.shape[1] - filters.shape[1]) // step + 1,
             filters.shape[3]
         )
         super(Convolution, self).__init__(shape, x.batched, x, filters)
+
+        self.step = step
 
     def do(self, x, filters):
         out = np.ndarray(self.shape if not self.batched else (x.shape[0],) + self.shape)
@@ -68,8 +70,8 @@ class Convolution(Node):
 
     def _get_x_slice(self, i, j, filters):
         s = (
-            slice(i, i + filters.shape[0]),
-            slice(j, j + filters.shape[1]),
+            slice(i * self.step, i * self.step + filters.shape[0]),
+            slice(j * self.step, j * self.step + filters.shape[1]),
             slice(None)
         )
 

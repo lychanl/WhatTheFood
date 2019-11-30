@@ -58,30 +58,17 @@ class TestConv(unittest.TestCase):
         [[5, 16], [7, 20], [9, 24]],
     ])
 
-    # 1 1 1 0
-    # 1 2 2 1
-    # 1 2 2 1
-    # 0 1 1 1
+    # 5 9
+    # 5 9
     #
-    # 0 1 1 1
-    # 1 2 2 1
-    # 1 2 2 1
-    # 1 1 1 0
-    #
-    # +
-    #
-    # 1 2 2 1
-    # 2 4 4 2
-    # 2 4 4 2
-    # 1 2 2 1
-    #
-    # 1 3 3 2
-    # 4 10 10 6
-    # 4 10 10 6
-    # 3 7 7 4
-    #
-    # =
-    #
+    # 16 24
+    # 16 24
+
+    expected_step_2 = np.array([
+        [[5, 16], [9, 24]],
+        [[5, 16], [9, 24]],
+    ])
+
     # 2 3 3 1
     # 3 6 6 3
     # 3 6 6 3
@@ -118,6 +105,45 @@ class TestConv(unittest.TestCase):
         [
             [[18, 18], [9, 9]],
             [[27, 27], [9, 9]]
+        ]
+    ])
+
+    # 2 1 2 1
+    # 1 2 1 2
+    # 2 1 2 1
+    # 1 2 1 2
+    #
+    # 1 3 1 3
+    # 4 4 4 4
+    # 1 3 1 3
+    # 4 4 4 4
+    grad_x_step_2 = np.array([
+        [[2, 1], [1, 3], [2, 1], [1, 3]],
+        [[1, 4], [2, 4], [1, 4], [2, 4]],
+        [[2, 1], [1, 3], [2, 1], [1, 3]],
+        [[1, 4], [2, 4], [1, 4], [2, 4]]
+    ])
+
+    # 8 12
+    # 8 12
+    #
+    # 4 4
+    # 4 4
+    #
+    #
+    # 8 12
+    # 8 12
+    #
+    # 4 4
+    # 4 4
+    grad_f_step_2 = np.array([
+        [
+            [[8, 8], [4, 4]],
+            [[12, 12], [4, 4]]
+        ],
+        [
+            [[8, 8], [4, 4]],
+            [[12, 12], [4, 4]]
         ]
     ])
 
@@ -167,3 +193,24 @@ class TestConv(unittest.TestCase):
 
         np.testing.assert_array_equal(grad_x, np.stack([self.grad_x] * 3))
         np.testing.assert_array_equal(grad_f, self.grad_f * 6)
+
+    def test_convolution_with_step(self):
+        x = graph.Constant(self.x)
+        f = graph.Constant(self.filters)
+
+        conv = graph.Convolution(x, f, step=2)
+
+        np.testing.assert_array_equal(self.expected_step_2, graph.run(conv))
+
+    def test_convolution_grad_with_step(self):
+        x_c = graph.Constant(self.x)
+        f_c = graph.Constant(self.filters)
+
+        conv = graph.Convolution(x_c, f_c, step=2)
+
+        grad = graph.Grad(conv, [x_c, f_c])
+
+        grad_x, grad_f = graph.run(grad)
+
+        np.testing.assert_array_equal(grad_x, self.grad_x_step_2)
+        np.testing.assert_array_equal(grad_f, self.grad_f_step_2)
