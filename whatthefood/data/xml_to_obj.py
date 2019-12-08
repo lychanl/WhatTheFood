@@ -2,11 +2,17 @@ import os
 import xml.etree.ElementTree as XMLElementTree
 
 
-def parse_dir(dir_name):
-    return [
+def parse_dir(dir_name, recursive=True):
+    elements = [
         parse_file(os.path.join(dir_name, filename))
         for filename in os.listdir(dir_name) if os.path.splitext(filename)[1] == '.xml'
     ]
+    if recursive:
+        for subdir in os.listdir(dir_name):
+            if os.path.isdir(os.path.join(dir_name, subdir)):
+                elements.extend(parse_dir(os.path.join(dir_name, subdir), recursive=True))
+
+    return elements
 
 
 def parse_file(xml_filename):

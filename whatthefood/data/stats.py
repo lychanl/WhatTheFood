@@ -1,3 +1,4 @@
+import argparse
 import itertools
 import sys
 
@@ -6,10 +7,11 @@ import numpy as np
 from whatthefood.data.xml_to_obj import parse_dir
 
 
-def dir_stats(dir_name):
-    data = parse_dir(dir_name)
+def dir_stats(dir_name, recursive=True):
+    data = parse_dir(dir_name, recursive)
 
-    n = len(data)
+    img_n = len(data)
+    obj_n = sum(len(a.objects) for a in data)
 
     to_stat = {
         'Image dimensions': [a.img_size for a in data],
@@ -31,7 +33,7 @@ def dir_stats(dir_name):
 
     label_occurences = count_label_occurrences(data)
 
-    return n, {
+    return img_n, obj_n, {
         prop_k: {
             stat_k: stat_f(prop_v)
             for stat_k, stat_f in stats.items()
@@ -68,14 +70,16 @@ def count_label_occurrences(data):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print("Invalid number of arguments 1 expected:")
-        print(" - directory name")
-        exit(1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('dir_name', type=str)
+    parser.add_argument('--recursive', action='store_true')
 
-    n, stats, lab_occ = dir_stats(sys.argv[1])
+    args = parser.parse_args()
 
-    print(f'{n} images')
+    img_n, obj_n, stats, lab_occ = dir_stats(args.dir_name, recursive=args.recursive)
+
+    print(f'{img_n} images')
+    print(f'{obj_n} objects')
     print()
 
     print("Statistics:")
