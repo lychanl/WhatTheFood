@@ -1,4 +1,24 @@
 import numpy as np
+from collections.abc import Iterable
+
+from PIL import Image
+
+from whatthefood.data.dataset import Dataset
+
+
+def get_dataset(annotations, n_cells, preprocessing=None):
+    classes = get_classes(annotations)
+
+    names = []
+    inputs = []
+    outputs = []
+
+    for a in annotations:
+        names.append(a.img_name)
+        inputs.append(load_input_image(a.img_path, preprocessing))
+        outputs.append(get_output(a, classes, n_cells))
+
+    return Dataset(names, inputs, outputs, classes)
 
 
 def get_classes(annotations):
@@ -31,11 +51,8 @@ def _get_cells(width, height, wcells, hcells):
     return cells
 
 
-def get_cells(annotations, wcells, hcells):
-    size = annotations[0].img_size
-
-    for a in annotations:
-        assert np.all(a.img_size == size)
+def get_cells(annotation, wcells, hcells):
+    size = annotation.img_size
 
     return _get_cells(*size[:2], wcells, hcells)
 
@@ -54,7 +71,9 @@ def get_cell(x, y, cells):
     return i, j
 
 
-def get_output(annotation, classes, cells):
+def get_output(annotation, classes, n_cells):
+    cells = get_cells(annotation, n_cells, n_cells)
+
     out = np.zeros((len(cells[0]), len(cells[1]), 5 + len(classes)))
 
     for o in annotation.objects:
@@ -75,3 +94,17 @@ def get_output(annotation, classes, cells):
         out[(i, j)] = [1., x, y, w, h] + [1. if o.label == c else 0. for c in classes]
 
     return out
+
+
+def load_input_image(path, preprocessing=None):
+    with Image.open(path) as img:
+        img_array = np.array(img) / 255
+
+    if preprocessing:
+        if isinstance(preprocessing, Iterable):
+            for p in preprocessing:
+                img_array = p(img_array)
+        else:
+            img_array = preprocessing(img_array)
+
+    return img_array

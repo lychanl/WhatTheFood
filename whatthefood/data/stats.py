@@ -75,10 +75,9 @@ def count_label_occurrences(data):
 
 
 def visualise_grids_classes(data, n_cells):
-    cells = get_cells(data, n_cells, n_cells)
     classes = get_classes(data)
 
-    outputs = [get_output(a, classes, cells) for a in data]
+    outputs = [get_output(a, classes, n_cells) for a in data]
     outs_sum = sum(outputs)
     outs_sum = outs_sum + np.flip(outs_sum, 0) + np.flip(outs_sum, 1) + np.flip(outs_sum, (0, 1))
 

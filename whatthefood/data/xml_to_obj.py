@@ -56,6 +56,7 @@ class Annotation(object):
     def __init__(self, xml_obj=None):
         self.img_name = None
         self.img_size = None
+        self.img_path = None
         self.objects = None
 
         if xml_obj:
@@ -63,6 +64,7 @@ class Annotation(object):
 
     def parse(self, xml_obj):
         self.img_name = xml_obj.find('filename').text
+        self.img_path = xml_obj.find('path').text
         size = xml_obj.find('size')
         self.img_size = (
             int(size.find('width').text),
