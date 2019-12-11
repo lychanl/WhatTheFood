@@ -2,13 +2,18 @@ import argparse
 import itertools
 import sys
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from whatthefood.data.xml_to_obj import parse_dir
+from whatthefood.data.obj_to_nparray import get_cells, get_classes, get_output
 
 
-def dir_stats(dir_name, recursive=True):
+def dir_stats(dir_name, recursive=True, visualise_grid=None):
     data = parse_dir(dir_name, recursive)
+
+    if visualise_grid:
+        visualise_grids_classes(data, visualise_grid)
 
     img_n = len(data)
     obj_n = sum(len(a.objects) for a in data)
@@ -69,14 +74,49 @@ def count_label_occurrences(data):
     return occ
 
 
+def visualise_grids_classes(data, n_cells):
+    cells = get_cells(data, n_cells, n_cells)
+    classes = get_classes(data)
+
+    outputs = [get_output(a, classes, cells) for a in data]
+    outs_sum = sum(outputs)
+    outs_sum = outs_sum + np.flip(outs_sum, 0) + np.flip(outs_sum, 1) + np.flip(outs_sum, (0, 1))
+
+    # log color scale
+    outs_sum = np.log(outs_sum + 1)
+
+    nrows = 3
+
+    fig, _axs = plt.subplots(nrows, len(classes) // nrows + 1)
+
+    def get_axis(i):
+        return _axs[i % nrows, i // nrows]
+
+    m = get_axis(0).matshow(outs_sum[:, :, 0])
+    plt.colorbar(m, ax=get_axis(0))
+    get_axis(0).set_title('ANY')
+
+    for i, c in enumerate(classes, start=1):
+        m = get_axis(i).matshow(outs_sum[:, :, 4 + i])
+        plt.colorbar(m, ax=get_axis(i))
+        get_axis(i).set_title(c)
+
+    plt.show()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('dir_name', type=str)
     parser.add_argument('--recursive', action='store_true')
+    parser.add_argument('--visualise-grid-classes', type=int, default=None)
 
     args = parser.parse_args()
 
-    img_n, obj_n, stats, lab_occ = dir_stats(args.dir_name, recursive=args.recursive)
+    img_n, obj_n, stats, lab_occ = dir_stats(
+        args.dir_name,
+        recursive=args.recursive,
+        visualise_grid=args.visualise_grid_classes
+    )
 
     print(f'{img_n} images')
     print(f'{obj_n} objects')
