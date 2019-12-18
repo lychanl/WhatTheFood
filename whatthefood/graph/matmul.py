@@ -10,7 +10,7 @@ class Matmul(Node):
         assert x.shape[-1] == y.shape[0]
 
         super(Matmul, self).__init__(
-            (x.shape[0], y.shape[1]) if not x.batched else (y.shape[1]),
+            (x.shape[0], y.shape[1]) if not x.batched else (y.shape[1],),
             x.batched,
             x, y
         )

@@ -1,1 +1,1 @@
-import whatthefood.nn.layers as layers
+from whatthefood.nn.model import Model
