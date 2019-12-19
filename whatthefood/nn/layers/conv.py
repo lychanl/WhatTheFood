@@ -21,4 +21,4 @@ class Convolution(Layer):
         if activation:
             y = activation(y, *activation_args, **activation_kwargs)
 
-        super(Convolution, self).__init__(y, [self.kernel, self.bias])
+        super(Convolution, self).__init__((x,), y, [self.kernel, self.bias])

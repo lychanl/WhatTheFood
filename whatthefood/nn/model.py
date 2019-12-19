@@ -10,6 +10,7 @@ class Model(object):
         self.output = None
         self.inputs = []
         self.grad = None
+        self.non_layer_variables = []
 
     def add(self, builder, *args, current_output_as_argument=True, set_output=True, **kwargs):
         if current_output_as_argument and self.output is not None:
@@ -20,6 +21,7 @@ class Model(object):
             self._add_input(obj)
 
         if isinstance(obj, Variable):
+            self.non_layer_variables.append(obj)
             self.variables.append(obj)
 
         if isinstance(obj, Layer):
@@ -35,6 +37,12 @@ class Model(object):
                 self.output = obj
 
         return obj
+
+    def initialize_weights(self, initializer):
+        for v in self.non_layer_variables:
+            v.value = initializer.get_weights(v.shape)
+        for l in self.layers:
+            l.initialize_weights(initializer)
 
     def _add_input(self, obj):
         self.inputs.append(obj)

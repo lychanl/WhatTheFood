@@ -18,6 +18,9 @@ def get_dataset(annotations, n_cells, preprocessing=None):
         inputs.append(load_input_image(a.img_path, preprocessing))
         outputs.append(get_output(a, classes, n_cells))
 
+    inputs = np.array(inputs)
+    outputs = np.array(outputs)
+
     return Dataset(names, inputs, outputs, classes)
 
 

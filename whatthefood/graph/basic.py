@@ -17,13 +17,32 @@ class Sum(Node):
 
     def backpropagate(self, grad, x, y):
         grad_x = np.sum(grad, axis=0) if not self.batched_args[0] and self.batched else grad
-        grad_y = np.sum(grad, axis=0) if not self.batched_args[0] and self.batched else grad
+        grad_y = np.sum(grad, axis=0) if not self.batched_args[1] and self.batched else grad
+
+        return grad_x, grad_y
+
+
+class Difference(Node):
+    def __init__(self, x, y):
+        assert x.shape == y.shape
+        super(Difference, self).__init__(x.shape, x.batched or y.batched, x, y)
+
+        self.batched_args = x.batched, y.batched
+
+    def do(self, x, y):
+        return x - y
+
+    def backpropagate(self, grad, x, y):
+        grad_x = np.sum(grad, axis=0) if not self.batched_args[0] and self.batched else grad
+        grad_y = -(np.sum(grad, axis=0) if not self.batched_args[0] and self.batched else grad)
 
         return grad_x, grad_y
 
 
 class Reshape(Node):
     def __init__(self, x, shape):
+        if -1 in shape:
+            shape = tuple(s if s != -1 else np.prod(x.shape) // -np.prod(shape) for s in shape)
         super(Reshape, self).__init__(shape, x.batched, x)
 
     def do(self, x):
@@ -111,3 +130,14 @@ class ReduceMean(Reduce):
 
     def backpropagate(self, grad, x):
         return np.broadcast_to(grad.reshape(self.grad_shape), x.shape) / self._get_divisor(x),
+
+
+class Square(Node):
+    def __init__(self, x):
+        super(Square, self).__init__(x.shape, x.batched, x)
+
+    def do(self, x):
+        return np.square(x)
+
+    def backpropagate(self, grad, x):
+        return 2 * x * grad
