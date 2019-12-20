@@ -9,7 +9,7 @@ class Convolution(Layer):
         if isinstance(x, Layer):
             x = x.output
 
-        self.kernel = graph.Variable((filter_size, filter_size, filters))
+        self.kernel = graph.Variable((filter_size, filter_size, x.shape[2], filters))
 
         y = graph.Convolution(x, self.kernel, step)
 

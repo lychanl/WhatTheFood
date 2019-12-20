@@ -56,25 +56,6 @@ class TestOps(unittest.TestCase):
         np.testing.assert_array_equal([3, 4, 6], g_x)
         np.testing.assert_array_equal([[1, 1], [2, 2], [3, 3]], g_y)
 
-    def test_relu(self):
-        x = graph.Constant([[1, 2, -3, 4], [-1, 2, -3, 0]])
-        y = graph.ReLU(x)
-        y01 = graph.ReLU(x, 0.1)
-
-        np.testing.assert_array_equal([[1, 2, 0, 4], [0, 2, 0, 0]], graph.run(y))
-        np.testing.assert_array_equal([[1, 2, -3*0.1, 4], [-1*0.1, 2, -3*0.1, 0]], graph.run(y01))
-
-    def test_relu_grad(self):
-        x = graph.Constant([[1, 2, -3, 4], [-1, 2, -3, 0]])
-        y = graph.ReLU(x)
-        y01 = graph.ReLU(x, 0.1)
-
-        g = graph.Grad(y, x)
-        g01 = graph.Grad(y01, x)
-
-        np.testing.assert_array_equal([[1, 1, 0, 1], [0, 1, 0, 1]], graph.run(g))
-        np.testing.assert_array_equal([[1, 1, 0.1, 1], [0.1, 1, 0.1, 1]], graph.run(g01))
-
     def test_reduce_sum(self):
         x = graph.Constant([[[1], [2]], [[3], [4]], [[5], [6]]])
         y1 = graph.ReduceSum(x, axis=0)
