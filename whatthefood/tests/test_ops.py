@@ -157,3 +157,38 @@ class TestOps(unittest.TestCase):
         np.testing.assert_array_equal(
             [np.ones_like(x_arr) / 3, np.ones_like(x_arr) / 3],
             graph.run(g2, {x: np.array([x_arr, 2 * x_arr])}))
+
+    def test_slice(self):
+        x_arr = [[1, 2, 3], [4, 5, 6]]
+        x = graph.Constant(x_arr)
+        y1 = graph.Slice(x, (0, 1), (2, 2))
+
+        np.testing.assert_array_equal([[2], [5]], graph.run(y1))
+
+    def test_slice_batched(self):
+        x_arr = np.array([[1, 2, 3], [4, 5, 6]])
+        x = graph.Placeholder((2, 3), True)
+        y1 = graph.Slice(x, (0, 1), (2, 2))
+
+        np.testing.assert_array_equal(
+            [[[2], [5]], [[-2], [-5]]],
+            graph.run(y1, {x: np.array([x_arr, -x_arr])}))
+
+    def test_slice_grad(self):
+        x_arr = [[1, 2, 3], [4, 5, 6]]
+        x = graph.Constant(x_arr)
+        y1 = graph.Slice(x, (0, 1), (2, 2))
+        g1 = graph.Grad(y1, x)
+
+        np.testing.assert_array_equal([[0, 1, 0], [0, 1, 0]], graph.run(g1))
+
+    def test_slice_grad_batched(self):
+        x_arr = np.array([[1, 2, 3], [4, 5, 6]])
+        x = graph.Placeholder((2, 3), True)
+        y1 = graph.Slice(x, (0, 1), (2, 2))
+        g1 = graph.Grad(y1, x)
+
+        np.testing.assert_array_equal(
+            [[[0, 1, 0], [0, 1, 0]], [[0, 1, 0], [0, 1, 0]]],
+            graph.run(g1, {x: np.array([x_arr, -x_arr])}))
+

@@ -52,6 +52,35 @@ class Reshape(Node):
         return grad.reshape(x.shape)
 
 
+class Slice(Node):
+    def __init__(self, x, id_from, id_to):
+        assert len(id_from) <= len(x.shape)
+        assert len(id_from) == len(id_to)
+        for i_f, i_t, d in zip(id_from, id_to, x.shape):
+            assert i_f >= 0
+            assert i_t > 0
+            assert i_f < i_t
+            assert i_t <= d
+
+        self.id_from = id_from
+        self.id_to = id_to
+
+        super(Slice, self).__init__(tuple(i_t - i_f for i_t, i_f in zip(id_to, id_from)), x.batched, x)
+
+        self.slice = tuple(slice(i_f, i_t) for i_t, i_f in zip(id_to, id_from))
+        if x.batched:
+            self.slice = (slice(None), *self.slice)
+
+    def do(self, x):
+        return x[self.slice]
+
+    def backpropagate(self, grad, x):
+        out = np.zeros_like(x)
+        out[self.slice] = grad
+
+        return out,
+
+
 def flatten(x):
     return Reshape(x, shape=(-1,))
 
