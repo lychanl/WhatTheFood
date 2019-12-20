@@ -192,3 +192,31 @@ class TestOps(unittest.TestCase):
             [[[0, 1, 0], [0, 1, 0]], [[0, 1, 0], [0, 1, 0]]],
             graph.run(g1, {x: np.array([x_arr, -x_arr])}))
 
+    def test_concatenate(self):
+        x1 = graph.Constant([[1, 2, 3], [4, 5, 6]])
+        x2 = graph.Constant([[7, 8], [9, 10]])
+        y = graph.Concatenate((x1, x2), axis=1)
+
+        np.testing.assert_array_equal([[1, 2, 3, 7, 8], [4, 5, 6, 9, 10]], graph.run(y))
+
+    def test_concatenate_batched(self):
+        x1_arr = np.array([[1, 2, 3], [4, 5, 6]])
+        x2_arr = np.array([[7, 8], [9, 10]])
+        x1 = graph.Placeholder(x1_arr.shape, batched=True)
+        x2 = graph.Placeholder(x2_arr.shape, batched=True)
+        y = graph.Concatenate((x1, x2), axis=-1)
+
+        np.testing.assert_array_equal(
+            [[[1, 2, 3, -7, -8], [4, 5, 6, -9, -10]], [[-1, -2, -3, 7, 8], [-4, -5, -6, 9, 10]]],
+            graph.run(y, {x1: np.array([x1_arr, -x1_arr]), x2: np.array([-x2_arr, x2_arr])}))
+
+    def test_concatenate_grad(self):
+        x1 = graph.Constant([[1, 2, 3], [4, 5, 6]])
+        x2 = graph.Constant([[7, 8], [9, 10]])
+        y = graph.Concatenate((x1, x2), axis=1)
+        g = graph.Grad(y, (x1, x2))
+
+        g1, g2 = graph.run(g)
+
+        np.testing.assert_array_equal(np.ones_like(x1.value), g1)
+        np.testing.assert_array_equal(np.ones_like(x2.value), g2)

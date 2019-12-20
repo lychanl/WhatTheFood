@@ -52,6 +52,10 @@ class Reshape(Node):
         return grad.reshape(x.shape)
 
 
+def flatten(x):
+    return Reshape(x, shape=(-1,))
+
+
 class Slice(Node):
     def __init__(self, x, id_from, id_to):
         assert len(id_from) <= len(x.shape)
@@ -81,8 +85,42 @@ class Slice(Node):
         return out,
 
 
-def flatten(x):
-    return Reshape(x, shape=(-1,))
+class Concatenate(Node):
+    def __init__(self, inputs, axis=0):
+        for i1, i2 in zip(inputs[:-1], inputs[1:]):
+            s1 = list(i1.shape)
+            s2 = list(i2.shape)
+            s1[axis] = 0
+            s2[axis] = 0
+            assert tuple(s1) == tuple(s2)
+            assert i1.batched == i2.batched
+
+        out_shape = (*inputs[0].shape[:axis], sum(i.shape[axis] for i in inputs))
+        if axis != -1:
+            out_shape = (*out_shape, *out_shape[(axis+1):])
+
+        super(Concatenate, self).__init__(out_shape, inputs[0].batched, *inputs)
+        self.axis = axis if not self.batched or axis < 0 else axis + 1
+
+        start = 0
+        self.slices = []
+        for inp in inputs:
+            s = tuple(
+                slice(start, start + inp.shape[a]) if a == axis else slice(None)
+                for a, d in enumerate(inp.shape)
+            )
+
+            if self.batched:
+                s = (slice(None), *s)
+
+            start += inp.shape[self.axis]
+            self.slices.append(s)
+
+    def do(self, *inputs):
+        return np.concatenate(inputs, self.axis)
+
+    def backpropagate(self, grad, *inputs):
+        return tuple(grad[s] for s in self.slices)
 
 
 class MultiplyByScalar(Node):
