@@ -1,4 +1,4 @@
-from whatthefood.graph.basic import Difference, MultiplyByScalar, Sum, ReduceSum, ReduceMean, Square
+from whatthefood.graph.basic import Difference, Multiply, MultiplyByScalar, Sum, ReduceSum, ReduceMean, Square
 from whatthefood.graph.basic import Concatenate, Reshape, flatten, Slice
 from whatthefood.graph.vars import Constant, Variable, Placeholder
 from whatthefood.graph.conv import Convolution

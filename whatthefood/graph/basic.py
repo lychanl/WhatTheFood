@@ -106,7 +106,7 @@ class Concatenate(Node):
         self.slices = []
         for inp in inputs:
             s = tuple(
-                slice(start, start + inp.shape[a]) if a == axis else slice(None)
+                slice(start, start + inp.shape[a]) if a == axis or a - len(self.shape) == axis else slice(None)
                 for a, d in enumerate(inp.shape)
             )
 
@@ -138,13 +138,10 @@ class MultiplyByScalar(Node):
 class Reduce(Node):
     def __init__(self, x, axis=None, reduce_batching=None):
         if axis is not None:
-            if isinstance(axis, Sequence):
-                assert max(axis) < len(x.shape) and min(axis) >= -len(x.shape)
-                out_shape = tuple(d for i, d in enumerate(x.shape) if i not in axis and i - len(x.shape) not in axis)
-            else:
-                assert -len(x.shape) <= axis < len(x.shape)
-                out_shape = x.shape[:axis] + x.shape[(axis + 1):]
-                axis = axis,
+            if not isinstance(axis, Sequence):
+                axis = (axis,)
+            assert max(axis) < len(x.shape) and min(axis) >= -len(x.shape)
+            out_shape = tuple(d for i, d in enumerate(x.shape) if i not in axis and i - len(x.shape) not in axis)
         else:
             out_shape = ()
             axis = tuple(range(len(x.shape)))
@@ -207,4 +204,28 @@ class Square(Node):
         return np.square(x)
 
     def backpropagate(self, grad, x):
-        return 2 * x * grad
+        return 2 * x * grad,
+
+
+class Multiply(Node):
+    def __init__(self, x, y):
+        assert len(x.shape) == len(y.shape)
+        assert x.batched == y.batched
+        for sx, sy in zip(x.shape, y.shape):
+            assert sx == sy or (sx == 1 if x.size < y.size else sy == 1)
+
+        super(Multiply, self).__init__(x.shape if len(x.shape) > len(y.shape) else y.shape, x.batched, x, y)
+
+    def do(self, x, y):
+        return x * y
+
+    def backpropagate(self, grad, x, y):
+        yg = x * grad
+        xg = y * grad
+
+        if xg.size > x.size:
+            xg = np.sum(xg, axis=tuple(i for i, s in enumerate(x.shape) if s == 1), keepdims=True)
+        if yg.size > y.size:
+            yg = np.sum(yg, axis=tuple(i for i, s in enumerate(y.shape) if s == 1), keepdims=True)
+
+        return xg, yg

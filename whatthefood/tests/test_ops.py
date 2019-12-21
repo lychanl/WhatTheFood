@@ -220,3 +220,21 @@ class TestOps(unittest.TestCase):
 
         np.testing.assert_array_equal(np.ones_like(x1.value), g1)
         np.testing.assert_array_equal(np.ones_like(x2.value), g2)
+
+    def test_multply(self):
+        x1 = graph.Constant([[1], [2], [3], [4]])
+        x2 = graph.Constant([[1, -1], [2, -2], [3, -3], [4, -4]])
+        y = graph.Multiply(x1, x2)
+
+        np.testing.assert_array_equal([[1, -1], [4, -4], [9, -9], [16, -16]], graph.run(y))
+
+    def test_multply_grad(self):
+        x1 = graph.Constant([[1], [2], [3], [4]])
+        x2 = graph.Constant([[1, -1], [2, -2], [3, -3], [4, -4]])
+        y = graph.Multiply(x1, x2)
+        g = graph.Grad(y, (x1, x2))
+
+        g1, g2 = graph.run(g)
+
+        np.testing.assert_array_equal([[0], [0], [0], [0]], g1)
+        np.testing.assert_array_equal([[1, 1], [2, 2], [3, 3], [4, 4]], g2)

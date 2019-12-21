@@ -15,7 +15,7 @@ class Grad(Node):
         self.outputs_graph = self._build_outputs_graph(y, xs)
         self.outputs_graph_flattened = self._flatten_outputs_graph(self.outputs_graph)
 
-        super(Grad, self).__init__(None, False, y, *self.outputs_graph_flattened)
+        super(Grad, self).__init__(None, False, *self._get_inputs(self.outputs_graph))
 
         self.y = y
         self.xs = xs
@@ -57,22 +57,29 @@ class Grad(Node):
 
                 for k, v in from_i.items():
                     if k in outputs:
-                        outputs[k].extend(v)
+                        outputs[k].update(v)
                     else:
                         outputs[k] = v
 
                 if i in outputs:
-                    outputs[i].append(y)
+                    outputs[i].add(y)
                 else:
-                    outputs[i] = [y]
+                    outputs[i] = {y}
 
         if y not in outputs:
-            outputs[y] = []
+            outputs[y] = set()
         return outputs if keep else None
+
+    def _get_inputs(self, outputs_graph):
+        inputs = set(outputs_graph)
+        inputs.update(i for e in outputs_graph for i in e.inputs)
+        return inputs
 
     def _flatten_outputs_graph(self, outputs):
         flattened = []
-        outputs = {k: list(v) for k, v in outputs.items()}
+
+        # copy outputs
+        outputs = {k: set(v) for k, v in outputs.items()}
 
         while outputs:
             lasts = [k for k, v in outputs.items() if not v]
