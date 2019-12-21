@@ -1,4 +1,9 @@
 import whatthefood.graph as graph
+from whatthefood.nn import Model, mse, layers
+from whatthefood.classification.utils import to_classes
+from whatthefood.classification.metrics import accuracy, precision
+
+import numpy as np
 
 
 def split_output(output):
@@ -55,3 +60,41 @@ def yolo_loss(expected, result, noobj_weight=.5, bounding_boxes_weight=5):
         weighted_existence_loss)
 
     return graph.ReduceMean(graph.ReduceSum(total_loss, reduce_batching=False))
+
+
+def yolo_metrics(expected, result):
+    e_existence, e_bounding_boxes, e_classes = split_output(expected)
+    existence, bounding_boxes, classes = split_output(result)
+
+    existence = to_classes(existence)
+    classes = to_classes(classes)
+
+    e_existence = to_classes(e_existence)
+    e_classes = to_classes(e_classes)
+
+    flags = e_existence
+
+    existence_accuracy = accuracy(e_existence, existence)
+    existence_precision = precision(e_existence, existence)
+    bb_error = mse(e_bounding_boxes, bounding_boxes)
+    classes_accuracy = accuracy(e_classes, classes, flags=flags)
+
+    return existence_accuracy, existence_precision, bb_error, classes_accuracy
+
+
+def lenet_7_yolo_net(input_shape, output_shape):
+    model = Model()
+    model.add(graph.Placeholder, input_shape, batched=True)
+    model.add(layers.Convolution, 30, 5, 1, activation=graph.ReLU)
+    model.add(graph.MaxPooling2d, 4)
+    model.add(layers.Convolution, 90, 5, 1, activation=graph.ReLU)
+    model.add(graph.MaxPooling2d, 3)
+    model.add(layers.Convolution, 360, 6, 1, activation=graph.ReLU)
+    model.add(layers.Convolution, 60, 1, 1, activation=graph.ReLU)
+    model.add(graph.flatten)
+    model.add(layers.Dense, 1024, activation=graph.ReLU)
+    model.add(layers.Dense, np.prod(output_shape))
+    model.add(graph.Reshape, output_shape)
+    model.add(yolo_activation)
+
+    return model
