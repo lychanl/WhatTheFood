@@ -229,3 +229,16 @@ class Multiply(Node):
             yg = np.sum(yg, axis=tuple(i for i, s in enumerate(y.shape) if s == 1), keepdims=True)
 
         return xg, yg
+
+
+class Divide(Node):
+    def __init__(self, x, y):
+        assert x.shape == y.shape
+        assert x.batched == y.batched
+        super(Divide, self).__init__(x.shape, x.batched, x, y)
+
+    def do(self, x, y):
+        return x / y
+
+    def backpropagate(self, grad, x, y):
+        return grad / y, -(grad * x) / np.square(y)

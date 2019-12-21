@@ -238,3 +238,21 @@ class TestOps(unittest.TestCase):
 
         np.testing.assert_array_equal([[0], [0], [0], [0]], g1)
         np.testing.assert_array_equal([[1, 1], [2, 2], [3, 3], [4, 4]], g2)
+
+    def test_divide(self):
+        x1 = graph.Constant([1, 2, 3, 4])
+        x2 = graph.Constant([4, 3, 2, 1])
+        y = graph.Divide(x1, x2)
+
+        np.testing.assert_array_equal([1/4, 2/3, 3/2, 4], graph.run(y))
+
+    def test_divide_grad(self):
+        x1 = graph.Constant([1, 2, 3, 4])
+        x2 = graph.Constant([4, 3, 2, 1])
+        y = graph.Divide(x1, x2)
+        g = graph.Grad(y, (x1, x2))
+
+        g1, g2 = graph.run(g)
+
+        np.testing.assert_array_equal([1/4, 1/3, 1/2, 1], g1)
+        np.testing.assert_array_equal([-1/16, -2/9, -3/4, -4], g2)

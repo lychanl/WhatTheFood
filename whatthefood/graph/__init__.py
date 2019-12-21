@@ -1,5 +1,6 @@
-from whatthefood.graph.basic import Difference, Multiply, MultiplyByScalar, Sum, ReduceSum, ReduceMean, Square
+from whatthefood.graph.basic import Difference, Divide, Multiply, MultiplyByScalar, Sum, ReduceSum, ReduceMean, Square
 from whatthefood.graph.basic import Concatenate, Reshape, flatten, Slice
+from whatthefood.graph.logical import GT, Equal, ArgMax
 from whatthefood.graph.vars import Constant, Variable, Placeholder
 from whatthefood.graph.conv import Convolution
 from whatthefood.graph.matmul import Matmul
