@@ -25,3 +25,9 @@ class TestLogical(unittest.TestCase):
         y = graph.ArgMax(x)
 
         np.testing.assert_array_equal([0, 1, 1], graph.run(y))
+
+    def test_negate(self):
+        x = graph.Constant([[1, 0], [1, 1], [0, 1]])
+        y = graph.Negate(x)
+
+        np.testing.assert_array_equal([[0, 1], [0, 0], [1, 0]], graph.run(y))

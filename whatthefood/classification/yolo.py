@@ -1,7 +1,7 @@
 import whatthefood.graph as graph
 from whatthefood.nn import Model, mse, layers
 from whatthefood.classification.utils import to_classes
-from whatthefood.classification.metrics import accuracy, precision
+from whatthefood.classification.metrics import accuracy, tp_rate, fp_rate
 
 import numpy as np
 
@@ -75,11 +75,12 @@ def yolo_metrics(expected, result):
     flags = e_existence
 
     existence_accuracy = accuracy(e_existence, existence)
-    existence_precision = precision(e_existence, existence)
+    existence_tp_rate = tp_rate(e_existence, existence)
+    existence_fp_rate = fp_rate(e_existence, existence)
     bb_error = mse(e_bounding_boxes, bounding_boxes)
     classes_accuracy = accuracy(e_classes, classes, flags=flags)
 
-    return existence_accuracy, existence_precision, bb_error, classes_accuracy
+    return existence_accuracy, existence_tp_rate, existence_fp_rate, bb_error, classes_accuracy
 
 
 def lenet_7_yolo_net(input_shape, output_shape):

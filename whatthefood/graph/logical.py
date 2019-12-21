@@ -39,3 +39,15 @@ class ArgMax(Node):
 
     def backpropagate(self, grad, x):
         return np.zeros_like(x)
+
+
+class Negate(Node):
+    def __init__(self, x):
+        super(Negate, self).__init__(x.shape, x.batched, x)
+
+    def do(self, x):
+        return np.logical_not(x)
+
+    def backpropagate(self, grad, x):
+        return np.zeros_like(x)
+
