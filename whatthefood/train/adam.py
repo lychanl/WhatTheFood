@@ -25,8 +25,8 @@ class ADAM(Minimizer):
             m_corr = self.m[i] / (1. - self.beta1)
             v_corr = self.v[i] / (1. - self.beta2)
 
-            change = self.lr * lr_decay * m_corr / (np.sqrt(v_corr) + self.eps)
+            change = m_corr / (np.sqrt(v_corr) + self.eps)
             if self.limit:
                 change = np.clip(change, -self.limit, self.limit)
 
-            var.value -= change
+            var.value -= self.lr * lr_decay * change

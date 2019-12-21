@@ -11,6 +11,8 @@ class Minimizer(object):
         self.loss = loss(self.expected_output, model.output)
         self.model = model
 
+        self.metrics = [self.loss]
+
         self.vars = model.variables
         self.grad = Grad(self.loss, self.model.variables)
 
@@ -29,6 +31,13 @@ class Minimizer(object):
 
         return input_dict
 
+    def add_metrics(self, metrics):
+        m = metrics(self.expected_output, self.model.output)
+        if isinstance(m, Sequence):
+            self.metrics.extend(m)
+        else:
+            self.metrics.append(m)
+
     def run(self, inputs, expected_output, *args, **kwargs):
         input_dict = self.get_input_dict(inputs, expected_output)
 
@@ -43,4 +52,4 @@ class Minimizer(object):
 
     def evaluate(self, ds):
         input_dict = self.get_input_dict(ds.inputs, ds.outputs)
-        return run(self.loss, input_dict)
+        return run(self.metrics, input_dict)

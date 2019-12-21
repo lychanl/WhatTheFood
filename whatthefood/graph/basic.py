@@ -49,7 +49,7 @@ class Reshape(Node):
         return x.reshape(self.shape if not self.batched else (x.shape[0], *self.shape))
 
     def backpropagate(self, grad, x):
-        return grad.reshape(x.shape)
+        return grad.reshape(x.shape),
 
 
 def flatten(x):

@@ -6,7 +6,7 @@ import numpy as np
 class GT(Node):
     def __init__(self, x, y):
         assert y.shape == () or y.shape == x.shape
-        assert x.batched == y.batched
+        assert y.shape == () or x.batched == y.batched
         super(GT, self).__init__(x.shape, x.batched, x, y)
 
     def do(self, x, y):
