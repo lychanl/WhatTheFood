@@ -47,19 +47,28 @@ def yolo_loss(expected, result, noobj_weight=.5, bounding_boxes_weight=5):
         graph.Square(graph.Difference(e_bounding_boxes, bounding_boxes)),
         axis=-1, reduce_batching=False)
     classes_loss = graph.ReduceSum(
-        graph.Square(graph.Difference(e_bounding_boxes, bounding_boxes)),
+        graph.Square(graph.Difference(e_classes, classes)),
         axis=-1, reduce_batching=False)
+
+    existence_flags = graph.Reshape(e_existence, e_existence.shape[:2])
 
     weighted_existence_loss = graph.MultiplyByScalar(existence_loss, ew)
     weighted_obj_loss = graph.MultiplyByScalar(existence_loss, ow)
     weighted_bounding_boxes_loss = graph.MultiplyByScalar(bounding_boxes_loss, bbw)
 
-    total_obj_loss = graph.Sum(graph.Sum(weighted_obj_loss, weighted_bounding_boxes_loss), classes_loss)
-    total_loss = graph.Sum(
-        graph.Multiply(total_obj_loss, graph.Reshape(e_existence, e_existence.shape[:2])),
-        weighted_existence_loss)
+    total_existence_loss = graph.ReduceMean(graph.ReduceSum(
+        graph.Sum(
+            graph.Multiply(weighted_obj_loss, existence_flags),
+            weighted_existence_loss
+        ), reduce_batching=False))
+    total_bounding_boxes_loss = graph.ReduceMean(graph.ReduceSum(
+        graph.Multiply(weighted_bounding_boxes_loss, existence_flags),
+        reduce_batching=False))
+    total_classes_loss = graph.ReduceMean(graph.ReduceSum(
+        graph.Multiply(classes_loss, existence_flags),
+        reduce_batching=False))
 
-    return graph.ReduceMean(graph.ReduceSum(total_loss, reduce_batching=False))
+    return graph.Sum(graph.Sum(total_existence_loss, total_bounding_boxes_loss), total_classes_loss)
 
 
 def yolo_metrics(expected, result):
@@ -92,6 +101,23 @@ def lenet_7_yolo_net(input_shape, output_shape):
     model.add(graph.MaxPooling2d, 3)
     model.add(layers.Convolution, 360, 6, 1, activation=graph.ReLU)
     model.add(layers.Convolution, 60, 1, 1, activation=graph.ReLU)
+    model.add(graph.flatten)
+    model.add(layers.Dense, 1024, activation=graph.ReLU)
+    model.add(layers.Dense, np.prod(output_shape))
+    model.add(graph.Reshape, output_shape)
+    model.add(yolo_activation)
+
+    return model
+
+
+def lenet_5_yolo_net(input_shape, output_shape):
+    model = Model()
+    model.add(graph.Placeholder, input_shape, batched=True)
+    model.add(layers.Convolution, 30, 6, 1, activation=graph.ReLU)
+    model.add(graph.MaxPooling2d, 4)
+    model.add(layers.Convolution, 90, 5, 1, activation=graph.ReLU)
+    model.add(layers.Convolution, 20, 1, 1, activation=graph.ReLU)
+    model.add(graph.MaxPooling2d, 3)
     model.add(graph.flatten)
     model.add(layers.Dense, 1024, activation=graph.ReLU)
     model.add(layers.Dense, np.prod(output_shape))

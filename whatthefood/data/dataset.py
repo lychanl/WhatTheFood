@@ -2,7 +2,7 @@ import numpy as np
 
 
 class Dataset(object):
-    def __init__(self, ids, inputs, outputs, classes=None):
+    def __init__(self, ids, inputs, outputs, classes=None, processors=None):
         assert len(ids) == len(inputs) == len(outputs)
 
         self.ids = ids
@@ -10,17 +10,25 @@ class Dataset(object):
         self.outputs = outputs
         self.classes = classes
 
+        if processors is None:
+            processors = ()
+        self.processors = processors
+
     def __len__(self):
         return len(self.ids)
 
     def get_batch(self, size):
-        samples = np.random.random_integers(0, len(self.inputs), size)
+        samples = np.random.random_integers(0, len(self.inputs) - 1, size)
 
         inputs = np.ndarray((size,) + self.inputs[0].shape)
-        outputs = np.ndarray((size,) + self.inputs[0].shape)
+        outputs = np.ndarray((size,) + self.outputs[0].shape)
 
         for i, s in enumerate(samples):
-            inputs[i] = self.inputs[s]
-            outputs[i] = self.outputs[s]
+            inp = self.inputs[s]
+            out = self.outputs[s]
+            for p in self.processors:
+                inp, out = p.process(inp, out)
+            inputs[i] = inp
+            outputs[i] = out
 
         return inputs, outputs

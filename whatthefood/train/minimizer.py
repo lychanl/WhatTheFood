@@ -3,6 +3,7 @@ from collections.abc import Sequence
 import numpy as np
 
 from whatthefood.graph import Grad, Placeholder, run
+from whatthefood.graph.node import Node
 
 
 class Minimizer(object):
@@ -32,11 +33,17 @@ class Minimizer(object):
         return input_dict
 
     def add_metrics(self, metrics):
-        m = metrics(self.expected_output, self.model.output)
-        if isinstance(m, Sequence):
-            self.metrics.extend(m)
+        if isinstance(metrics, Node):
+            self.metrics.append(metrics)
+        elif isinstance(metrics, Sequence):
+            for m in metrics:
+                self.add_metrics(m)
         else:
-            self.metrics.append(m)
+            m = metrics(self.expected_output, self.model.output)
+            if isinstance(m, Sequence):
+                self.metrics.extend(m)
+            else:
+                self.metrics.append(m)
 
     def run(self, inputs, expected_output, *args, **kwargs):
         input_dict = self.get_input_dict(inputs, expected_output)

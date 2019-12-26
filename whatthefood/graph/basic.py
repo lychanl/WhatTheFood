@@ -34,7 +34,7 @@ class Difference(Node):
 
     def backpropagate(self, grad, x, y):
         grad_x = np.sum(grad, axis=0) if not self.batched_args[0] and self.batched else grad
-        grad_y = -(np.sum(grad, axis=0) if not self.batched_args[0] and self.batched else grad)
+        grad_y = -(np.sum(grad, axis=0) if not self.batched_args[1] and self.batched else grad)
 
         return grad_x, grad_y
 
