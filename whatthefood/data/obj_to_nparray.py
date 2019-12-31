@@ -101,7 +101,7 @@ def get_output(annotation, classes, n_cells):
 
 def load_input_image(path, preprocessing=None):
     with Image.open(path) as img:
-        img_array = np.array(img) / 255
+        img_array = np.array(img, dtype=np.float32) / 255
 
     if preprocessing:
         if isinstance(preprocessing, Iterable):

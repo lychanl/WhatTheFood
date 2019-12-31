@@ -92,6 +92,34 @@ def yolo_metrics(expected, result):
     return existence_accuracy, existence_tp_rate, existence_fp_rate, bb_error, classes_accuracy
 
 
+def fast_yolo_net(input_shape, output_shape):
+    model = Model()
+    model.add(graph.Placeholder, input_shape, batched=True)
+    model.add(layers.Convolution, 16, 3, 1, activation=graph.ReLU)
+    model.add(layers.Convolution, 32, 3, 1, activation=graph.ReLU)
+    model.add(graph.MaxPooling2d, 2)
+    model.add(layers.Convolution, 64, 3, 1, activation=graph.ReLU)
+    model.add(graph.MaxPooling2d, 2)
+    model.add(layers.Convolution, 128, 3, 1, activation=graph.ReLU)
+    model.add(graph.MaxPooling2d, 2)
+    model.add(layers.Convolution, 256, 3, 1, activation=graph.ReLU)
+    model.add(graph.MaxPooling2d, 2)
+    model.add(layers.Convolution, 512, 3, 1, activation=graph.ReLU)
+    model.add(layers.Convolution, 1024, 1, 1, activation=graph.ReLU)
+    model.add(layers.Convolution, 1024, 1, 1, activation=graph.ReLU)
+    model.add(layers.Convolution, 1024, 1, 1, activation=graph.ReLU)
+    model.add(graph.flatten)
+
+    model.add(layers.Dense, 256, activation=graph.ReLU)
+    model.add(layers.Dense, 4096, activation=graph.ReLU)
+    model.add(layers.Dense, np.prod(output_shape))
+    model.add(graph.Reshape, output_shape)
+
+    model.add(yolo_activation)
+
+    return model
+
+
 def lenet_7_yolo_net(input_shape, output_shape):
     model = Model()
     model.add(graph.Placeholder, input_shape, batched=True)

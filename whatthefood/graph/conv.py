@@ -1,4 +1,5 @@
 from whatthefood.graph.node import Node
+from whatthefood.ext import conv as conv_impl
 
 import numpy as np
 
@@ -18,64 +19,27 @@ class Convolution(Node):
         self.step = step
 
     def do(self, x, filters):
-        out = np.ndarray(self.shape if not self.batched else (x.shape[0],) + self.shape)
-        for i in range(self.shape[0]):
-            for j in range(self.shape[1]):
-                x_slice = x[self._get_x_slice(i, j, filters)]
-                x_slice = self._reshape_in_to_full(x_slice)
-                if not self.batched:
-                    out[i, j, :] = np.sum(x_slice * filters, axis=(0, 1, 2))
-                else:
-                    out[:, i, j, :] = np.sum(x_slice * filters, axis=(1, 2, 3))
+        if x.dtype != np.float32:
+            x = np.cast[np.float32](x)
+        if filters.dtype != np.float32:
+            filters = np.cast[np.float32](filters)
+        if not self.batched:
+            x = np.array([x], np.float32)
 
-        return out
+        out = conv_impl.conv2d(x, filters, self.step)
+        return out if self.batched else out[0]
 
     def backpropagate(self, grad, x, filters):
-        grad_x = np.zeros_like(x, dtype=np.float32)
-        grad_filters = np.zeros_like(filters, dtype=np.float32)
 
-        for i in range(self.shape[0]):
-            for j in range(self.shape[1]):
-                x_slice = self._get_x_slice(i, j, filters)
-                g = grad[self._get_output_slice(i, j)]
+        if x.dtype != np.float32:
+            x = np.cast[np.float32](x)
+        if filters.dtype != np.float32:
+            filters = np.cast[np.float32](filters)
+        if grad.dtype != np.float32:
+            grad = np.cast[np.float32](grad)
+        if not self.batched:
+            x = np.array([x], np.float32)
+            grad = np.array([grad], np.float32)
 
-                gx = np.sum(
-                    self._reshape_out_to_full(g) * filters,
-                    axis=-1)
-                grad_x[x_slice] += gx
-
-                gf = self._reshape_out_to_full(g) * self._reshape_in_to_full(x[x_slice])
-                if self.batched:
-                    gf = np.sum(gf, axis=0)
-                grad_filters += gf
-
-        return grad_x, grad_filters
-
-    def _reshape_out_to_full(self, out):
-        return out.reshape(out.shape[:-1] + (1,) + out.shape[-1:])
-
-    def _reshape_filters_to_full(self, f):
-        return f
-
-    def _reshape_in_to_full(self, x):
-        return x.reshape(x.shape + (1,))
-
-    def _get_output_slice(self, i, j):
-        s = (slice(i, i+1), slice(j, j+1), slice(None))
-
-        if self.batched:
-            s = (slice(None),) + s
-
-        return s
-
-    def _get_x_slice(self, i, j, filters):
-        s = (
-            slice(i * self.step, i * self.step + filters.shape[0]),
-            slice(j * self.step, j * self.step + filters.shape[1]),
-            slice(None)
-        )
-
-        if self.batched:
-            s = (slice(None),) + s
-
-        return s
+        grad_x, grad_filters = conv_impl.conv2d_grad(x, filters, grad, self.step)
+        return grad_x if self.batched else grad_x[0], grad_filters

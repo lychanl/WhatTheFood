@@ -22,3 +22,6 @@ class Convolution(Layer):
             y = activation(y, *activation_args, **activation_kwargs)
 
         super(Convolution, self).__init__((x,), y, [self.kernel, self.bias])
+
+    def get_input_size(self):
+        return self.kernel.size
