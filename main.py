@@ -6,18 +6,12 @@ import argparse
 import whatthefood.data.obj_to_nparray as otn
 import whatthefood.data.xml_to_obj as xto
 from whatthefood.data.preprocessing import ScalePreprocessor
-import whatthefood.graph as graph
 import whatthefood.nn as nn
-import whatthefood.nn.layers as layers
 from whatthefood.train import SGD, ADAM
 import whatthefood.classification.yolo as yolo
 from whatthefood.data.preprocessing.mb_samples_preprocessing import AddNoisePreprocessor, FlipPreprocessor
 import os
-import gc
-import psutil
 import pickle
-import cProfile
-from pympler import tracker
 
 
 def get_data(fname, dname):
