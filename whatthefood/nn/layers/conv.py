@@ -11,7 +11,7 @@ class Convolution(Layer):
 
         self.kernel = graph.Variable((filter_size, filter_size, x.shape[2], filters))
 
-        y = graph.Convolution(x, self.kernel, step, paddding)
+        y = graph.Convolution(x, self.kernel, step, padding)
 
         self.bias = graph.Variable(y.shape) if bias else None
 

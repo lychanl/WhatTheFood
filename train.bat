@@ -1,0 +1,1 @@
+py main.py --train_ds_file dataset.pickle --train_ds_dir data --noobj_w 0.05 --bb_w 2 --model_type=fast_yolo --lr=1e-4 --out_model_file=model.pickle --log_file=log.txt --steps=400 --decay=True --eval_steps=10

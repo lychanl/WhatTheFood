@@ -61,9 +61,10 @@ def print_eval(ds, name, optimizer, log_file):
     print(stats)
     if log_file:
         log_file.write(stats)
+        log_file.write(os.linesep)
 
 
-def run_optimizer(optimizer, steps, train_ds, eval_ds, log_file, decay, prev_steps, mb_size):
+def run_optimizer(optimizer, steps, train_ds, eval_ds, log_file, decay, prev_steps, mb_size, ev_steps):
     with np.printoptions(precision=5):
         def log_evals():
             print_eval(train_ds, 'train', optimizer, log_file)
@@ -71,8 +72,6 @@ def run_optimizer(optimizer, steps, train_ds, eval_ds, log_file, decay, prev_ste
                 print_eval(eval_ds, 'eval', optimizer, log_file)
 
         log_evals()
-
-        ev_steps = 5
 
         for i in range(0, steps, ev_steps):
             for j in range(i, i + ev_steps):
@@ -83,6 +82,7 @@ def run_optimizer(optimizer, steps, train_ds, eval_ds, log_file, decay, prev_ste
                 print(step_stats)
                 if log_file:
                     log_file.write(step_stats)
+                    log_file.write(os.linesep)
 
             log_evals()
 
@@ -112,6 +112,7 @@ if __name__ == '__main__':
     parser.add_argument('--prev_steps', type=int, default=0)
     parser.add_argument('--steps', type=int, default=20)
     parser.add_argument('--mb_size', type=int, default=8)
+    parser.add_argument('--eval_steps', type=int, default=10)
 
     args = parser.parse_args()
 
@@ -138,7 +139,11 @@ if __name__ == '__main__':
         print(f'Logging to {args.log_file}')
         log_file = open(args.log_file, 'a')
 
-    run_optimizer(optimizer, args.steps, train_ds, eval_ds, log_file, args.decay, args.prev_steps, args.mb_size)
+    run_optimizer(
+        optimizer, args.steps, train_ds, eval_ds,
+        log_file, args.decay, args.prev_steps, args.mb_size,
+        args.eval_steps
+    )
 
     out_model_file = args.out_model_file if args.out_model_file else args.model_file
     if out_model_file:
