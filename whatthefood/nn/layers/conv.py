@@ -5,13 +5,13 @@ from whatthefood.nn.layers.layer import Layer
 class Convolution(Layer):
     def __init__(
             self, x, filters, filter_size, step, bias=True,
-            activation=None, *activation_args, **activation_kwargs):
+            activation=None, padding='VALID', *activation_args, **activation_kwargs):
         if isinstance(x, Layer):
             x = x.output
 
         self.kernel = graph.Variable((filter_size, filter_size, x.shape[2], filters))
 
-        y = graph.Convolution(x, self.kernel, step)
+        y = graph.Convolution(x, self.kernel, step, paddding)
 
         self.bias = graph.Variable(y.shape) if bias else None
 
