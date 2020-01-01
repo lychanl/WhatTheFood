@@ -68,7 +68,7 @@ PyArrayObject* _conv2d_build_output(PyArrayObject* arr, PyArrayObject* filters, 
 	npy_intp dims[4] = {
 		PyArray_DIM(arr, 0),
 		padding_same ? (PyArray_DIM(arr, 1) - 1) / step + 1: (PyArray_DIM(arr, 1) - PyArray_DIM(filters, 0)) / step + 1,
-		padding_same ? (PyArray_DIM(arr, 1) - 1) / step + 1 : (PyArray_DIM(arr, 2) - PyArray_DIM(filters, 1)) / step + 1,
+		padding_same ? (PyArray_DIM(arr, 2) - 1) / step + 1 : (PyArray_DIM(arr, 2) - PyArray_DIM(filters, 1)) / step + 1,
 		PyArray_DIM(filters, 3)
 	};
 
@@ -99,7 +99,7 @@ void _conv2d_run_batched(PyArrayObject* out, PyArrayObject* arr, PyArrayObject* 
 			{
 				npy_intp x0 = step * ox - maxx / 2;
 				if (x0 < 0)
-					minx += x0;
+					minx -= x0;
 				if (x0 + maxx > PyArray_DIM(arr, 1))
 					maxx = PyArray_DIM(arr, 1) - x0;
 			}
@@ -115,7 +115,7 @@ void _conv2d_run_batched(PyArrayObject* out, PyArrayObject* arr, PyArrayObject* 
 				{
 					npy_intp y0 = step * oy - maxy / 2;
 					if (y0 < 0)
-						miny += y0;
+						miny -= y0;
 					if (y0 + maxy > PyArray_DIM(arr, 2))
 						maxy = PyArray_DIM(arr, 2) - y0;
 				}
@@ -191,7 +191,7 @@ void _conv2d_grad_run(PyArrayObject* arr_grad, PyArrayObject* filters_grad, PyAr
 				{
 					npy_intp x0 = step * ox - maxx / 2;
 					if (x0 < 0)
-						minx += x0;
+						minx -= x0;
 					if (x0 + maxx > PyArray_DIM(arr, 1))
 						maxx = PyArray_DIM(arr, 1) - x0;
 				}
@@ -207,7 +207,7 @@ void _conv2d_grad_run(PyArrayObject* arr_grad, PyArrayObject* filters_grad, PyAr
 					{
 						npy_intp y0 = step * oy - maxy / 2;
 						if (y0 < 0)
-							miny += y0;
+							miny -= y0;
 						if (y0 + maxy > PyArray_DIM(arr, 2))
 							maxy = PyArray_DIM(arr, 2) - y0;
 					}
