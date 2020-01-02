@@ -7,7 +7,7 @@ from whatthefood.graph.node import Node
 
 class Sum(Node):
     def __init__(self, x, y):
-        assert x.shape == y.shape
+        assert x.shape[-len(y.shape):] == y.shape[-len(x.shape):]
         super(Sum, self).__init__(x.shape, x.batched or y.batched, x, y)
 
         self.batched_args = x.batched, y.batched
@@ -16,8 +16,10 @@ class Sum(Node):
         return x + y
 
     def backpropagate(self, grad, x, y):
-        grad_x = np.sum(grad, axis=0) if not self.batched_args[0] and self.batched else grad
-        grad_y = np.sum(grad, axis=0) if not self.batched_args[1] and self.batched else grad
+        grad_x = np.sum(grad, axis=tuple(range(len(y.shape) - len(x.shape))))\
+            if not self.batched_args[0] and self.batched else grad
+        grad_y = np.sum(grad, axis=tuple(range(len(x.shape) - len(y.shape))))\
+            if not self.batched_args[1] and self.batched else grad
 
         return grad_x, grad_y
 

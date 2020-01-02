@@ -83,7 +83,7 @@ PyArrayObject* _conv2d_build_output(PyArrayObject* arr, PyArrayObject* filters, 
 
 void _conv2d_run_batched(PyArrayObject* out, PyArrayObject* arr, PyArrayObject* filters, int step, int padding_same)
 {
-//#pragma omp paralell for
+#pragma omp parallel for
 	for (npy_intp sample = 0; sample < PyArray_DIM(out, 0); ++sample)
 	{
 		npy_intp isi = sample * PyArray_STRIDE(arr, 0) / sizeof(float);
@@ -172,7 +172,7 @@ PyObject* _conv2d_impl(PyArrayObject* arr, PyArrayObject* filters, int step, int
 
 void _conv2d_grad_run(PyArrayObject* arr_grad, PyArrayObject* filters_grad, PyArrayObject* arr, PyArrayObject* filters, PyArrayObject* grad, int step, int padding_same)
 {
-//#pragma omp parallel for
+#pragma omp parallel for
 	for (npy_intp ic = 0; ic < PyArray_DIM(arr, 3); ++ic)
 	{
 		npy_intp icf = ic * PyArray_STRIDE(filters, 2) / sizeof(float);

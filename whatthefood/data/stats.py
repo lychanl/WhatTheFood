@@ -25,6 +25,8 @@ def dir_stats(dir_name, recursive=True, visualise_grid=None):
         'Minimal bounding box distances (different labels)': get_min_bb_dists(data, False),
         'Bounding box centers': [o.center for a in data for o in a.objects],
         'Bounding box sizes': [o.size for a in data for o in a.objects],
+        'Bounding box centers spread': get_bb_centers_ranges(data),
+        'Bounding box spread': get_bb_ranges(data)
     }
 
     stats = {
@@ -52,6 +54,38 @@ def get_min_bb_dists(data, count_same_label=True):
         np.min([
             np.max(np.abs(np.array(o1.center) - o2.center))
             for o1, o2 in itertools.combinations(a.objects, r=2) if count_same_label or o1.label != o2.label
+        ], axis=0)
+        for a in data
+    ]
+
+
+def get_bb_centers_ranges(data, count_same_label=True):
+    return [
+        np.max([
+            (np.abs(np.array(o1.center) - o2.center))
+            for o1, o2 in itertools.combinations(a.objects, r=2)
+        ], axis=0)
+        for a in data
+    ]
+
+def get_bb_range(center1, center2, size1, size2):
+    points = [
+        (np.array(center1) - size1) / 2,
+        (np.array(center1) + size1) / 2,
+        (np.array(center2) - size2) / 2,
+        (np.array(center2) + size2) / 2
+    ]
+    return np.max([
+        np.abs(p1 - p2)
+        for p1, p2 in itertools.combinations(points, r=2)
+    ], axis=0)
+
+
+def get_bb_ranges(data):
+    return [
+        np.max([
+            get_bb_range(o1.center, o2.center, o1.size, o2.size)
+            for o1, o2 in itertools.combinations(a.objects, r=2)
         ], axis=0)
         for a in data
     ]

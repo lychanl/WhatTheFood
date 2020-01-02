@@ -13,7 +13,7 @@ class Convolution(Layer):
 
         y = graph.Convolution(x, self.kernel, step, padding)
 
-        self.bias = graph.Variable(y.shape) if bias else None
+        self.bias = graph.Variable((filters,)) if bias else None
 
         if bias:
             y = graph.Sum(y, self.bias)
