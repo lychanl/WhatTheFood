@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 
 from whatthefood.train import Minimizer
 
@@ -30,3 +31,9 @@ class ADAM(Minimizer):
                 change = np.clip(change, -self.limit, self.limit)
 
             var.value -= self.lr * lr_decay * change
+
+    def store(self, file):
+        self.m, self.v = pickle.load(file)
+
+    def restore(self, file):
+        pickle.dump((self.m, self.v), file)

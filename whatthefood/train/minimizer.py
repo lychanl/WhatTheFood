@@ -60,3 +60,9 @@ class Minimizer(object):
     def evaluate(self, ds):
         input_dict = self.get_input_dict(ds.inputs, ds.outputs)
         return run(self.metrics, input_dict)
+
+    def store(self, file):
+        pass
+
+    def restore(self, file):
+        pass

@@ -96,6 +96,7 @@ if __name__ == '__main__':
     parser.add_argument('--train_ds_dir', type=str, default=None)
 
     parser.add_argument('--learner', type=str, default='ADAM', choices=['ADAM', 'SGD'])
+    parser.add_argument('--learner_file', type=str, default=None)
 
     parser.add_argument('--noobj_w', type=float, default=0.5)
     parser.add_argument('--bb_w', type=float, default=5)
@@ -118,6 +119,7 @@ if __name__ == '__main__':
     eval_ds = get_data(args.eval_ds_file, args.eval_ds_dir)
 
     model = get_model(args.model_file, args.model_type, train_ds.inputs[0].shape, train_ds.outputs[0].shape)
+
     optimizer = (ADAM if args.learner == 'ADAM' else SGD)(
         model, functools.partial(
             yolo.yolo_loss, noobj_weight=args.noobj_w, bounding_boxes_weight=args.bb_w
@@ -127,6 +129,10 @@ if __name__ == '__main__':
     optimizer.add_metrics(optimizer.loss.inputs[0].inputs)
     optimizer.add_metrics(optimizer.loss.inputs[1])
     optimizer.add_metrics(yolo.yolo_metrics)
+
+    if args.learner_file is not None and os.path.isfile(args.learner_file):
+        with open(args.learner_file, 'rb') as lrn_state:
+            optimizer.restore(lrn_state)
 
     log_file = None
     if args.log_file:
@@ -144,5 +150,10 @@ if __name__ == '__main__':
         print(f'Saving output to {out_model_file}')
         with open(out_model_file, 'wb') as f:
             pickle.dump(model, f)
+
+    if args.learner_file:
+        with open(args.learner_file, 'wb') as lrn_state:
+            optimizer.store(lrn_state)
+
     if log_file:
         log_file.close()

@@ -104,12 +104,12 @@ def fast_yolo_net(input_shape, output_shape):
     model.add(layers.Convolution, 128, 3, 1, activation=graph.ReLU)
     model.add(layers.Convolution, 256, 3, 1, activation=graph.ReLU)
     model.add(layers.Convolution, 512, 7, 1, activation=graph.ReLU)
-    model.add(layers.Convolution, 512, 5, 1, activation=graph.ReLU, padding="SAME")
-    model.add(layers.Convolution, 512, 1, 1, activation=graph.ReLU)
+    model.add(layers.Convolution, 1024, 5, 1, activation=graph.ReLU, padding="SAME")
+    model.add(layers.Convolution, 1024, 1, 1, activation=graph.ReLU)
     model.add(graph.flatten)
 
-    model.add(layers.Dense, 256, activation=graph.ReLU)
-    model.add(layers.Dense, 2048, activation=graph.ReLU)
+    model.add(layers.Dense, 512, activation=graph.ReLU)
+    model.add(layers.Dense, 4096, activation=graph.ReLU)
     model.add(layers.Dense, np.prod(output_shape))
     model.add(graph.Reshape, output_shape)
 
