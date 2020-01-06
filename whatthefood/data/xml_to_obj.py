@@ -21,7 +21,7 @@ def parse_file(xml_filename):
 
     assert obj.tag == 'annotation'
 
-    return Annotation(obj)
+    return Annotation(obj, os.path.dirname(xml_filename))
 
 
 class Object(object):
@@ -41,34 +41,34 @@ class Object(object):
         ymax = int(bb.find('ymax').text)
 
         self.center = (
-            (xmin + xmax) // 2,
             (ymin + ymax) // 2,
+            (xmin + xmax) // 2,
         )
         self.size = (
-            xmax - xmin,
             ymax - ymin,
+            xmax - xmin,
         )
 
         self.label = xml_obj.find('name').text
 
 
 class Annotation(object):
-    def __init__(self, xml_obj=None):
+    def __init__(self, xml_obj=None, dir_path=None):
         self.img_name = None
         self.img_size = None
         self.img_path = None
         self.objects = None
 
         if xml_obj:
-            self.parse(xml_obj)
+            self.parse(xml_obj, dir_path)
 
-    def parse(self, xml_obj):
+    def parse(self, xml_obj, dir_path=None):
         self.img_name = xml_obj.find('filename').text
-        self.img_path = xml_obj.find('path').text
+        self.img_path = xml_obj.find('path').text if dir_path is None else os.path.join(dir_path, self.img_name)
         size = xml_obj.find('size')
         self.img_size = (
-            int(size.find('width').text),
             int(size.find('height').text),
+            int(size.find('width').text),
             int(size.find('depth').text),
         )
 

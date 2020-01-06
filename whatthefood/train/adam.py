@@ -33,7 +33,7 @@ class ADAM(Minimizer):
             var.value -= self.lr * lr_decay * change
 
     def store(self, file):
-        self.m, self.v = pickle.load(file)
+        pickle.dump((self.m, self.v), file)
 
     def restore(self, file):
-        pickle.dump((self.m, self.v), file)
+        self.m, self.v = pickle.load(file)
