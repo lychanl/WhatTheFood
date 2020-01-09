@@ -14,7 +14,9 @@ import os
 import pickle
 
 
-def get_data(fname, dname):
+def get_data(fname, dname, hcells, wcells, scale):
+    if not hcells:
+        raise argparse.ArgumentError('--hcells', 'Argument is required if a dataset is created')
     if fname and os.path.isfile(fname):
         print(f'Loading data from file: {fname}')
         with open(fname, 'rb') as f:
@@ -24,7 +26,7 @@ def get_data(fname, dname):
 
         anns = xto.parse_dir('data')
         print('Creating dataset')
-        ds = otn.get_dataset(anns, 12, preprocessing=ScalePreprocessor(13, np.mean))
+        ds = otn.get_dataset(anns, hcells, wcells, preprocessing=ScalePreprocessor(scale, np.mean))
         ds.processors = [AddNoisePreprocessor(std=1 / 255, limits=(0, 1)), FlipPreprocessor()]
 
         if fname:
@@ -98,6 +100,10 @@ if __name__ == '__main__':
 
     parser.add_argument('--eval_ds_dir', type=str, default=None)
     parser.add_argument('--train_ds_dir', type=str, default=None)
+    parser.add_argument('--hcells', type=int, required=False, default=12)
+    parser.add_argument('--wcells', type=int, required=False, default=None)
+
+    parser.add_argument('--scale', type=int, required=False, default=13)
 
     parser.add_argument('--learner', type=str, default='ADAM', choices=['ADAM', 'SGD'])
     parser.add_argument('--learner_file', type=str, default=None)
@@ -115,12 +121,12 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    train_ds = get_data(args.train_ds_file, args.train_ds_dir)
+    train_ds = get_data(args.train_ds_file, args.train_ds_dir, args.hcells, args.wcells, args.scale)
     if not train_ds:
         print('No training dataset given')
         exit(-1)
 
-    eval_ds = get_data(args.eval_ds_file, args.eval_ds_dir)
+    eval_ds = get_data(args.eval_ds_file, args.eval_ds_dir, args.hcells, args.wcells, args.scale)
 
     model = get_model(args.model_file, args.model_type, train_ds.inputs[0].shape, train_ds.outputs[0].shape)
 

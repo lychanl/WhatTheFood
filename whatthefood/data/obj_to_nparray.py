@@ -7,8 +7,11 @@ from whatthefood.data.dataset import Dataset
 from whatthefood.data.xml_to_obj import Object
 
 
-def get_dataset(annotations, n_cells, preprocessing=None):
+def get_dataset(annotations, n_cells_h, n_cells_w=None, preprocessing=None):
     classes = get_classes(annotations)
+
+    if not n_cells_w:
+        n_cells_w = n_cells_h
 
     names = []
     inputs = []
@@ -17,7 +20,7 @@ def get_dataset(annotations, n_cells, preprocessing=None):
     for a in annotations:
         names.append(a.img_name)
         inputs.append(load_input_image(a.img_path, preprocessing))
-        outputs.append(get_output(a, classes, n_cells))
+        outputs.append(get_output(a, classes, n_cells_h, n_cells_w))
 
     inputs = np.array(inputs)
     outputs = np.array(outputs)
@@ -75,8 +78,8 @@ def get_cell(y, x, cells):
     return i, j
 
 
-def get_output(annotation, classes, n_cells):
-    cells = get_cells(annotation.img_size, n_cells, n_cells)
+def get_output(annotation, classes, n_cells_h, n_cells_w):
+    cells = get_cells(annotation.img_size, n_cells_h, n_cells_w)
 
     out = np.zeros((len(cells[0]), len(cells[1]), 5 + len(classes)))
 

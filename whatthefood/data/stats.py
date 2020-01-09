@@ -13,7 +13,7 @@ def dir_stats(dir_name, recursive=True, visualise_grid=None):
     data = parse_dir(dir_name, recursive)
 
     if visualise_grid:
-        visualise_grids_classes(data, visualise_grid)
+        visualise_grids_classes(data, visualise_grid[0], visualise_grid[1])
 
     img_n = len(data)
     obj_n = sum(len(a.objects) for a in data)
@@ -108,10 +108,10 @@ def count_label_occurrences(data):
     return occ
 
 
-def visualise_grids_classes(data, n_cells):
+def visualise_grids_classes(data, n_cells_h, n_cells_w):
     classes = get_classes(data)
 
-    outputs = [get_output(a, classes, n_cells) for a in data]
+    outputs = [get_output(a, classes, n_cells_h, n_cells_w) for a in data]
     outs_sum = sum(outputs)
     outs_sum = outs_sum + np.flip(outs_sum, 0) + np.flip(outs_sum, 1) + np.flip(outs_sum, (0, 1))
 
@@ -142,13 +142,19 @@ if __name__ == '__main__':
     parser.add_argument('dir_name', type=str)
     parser.add_argument('--recursive', action='store_true')
     parser.add_argument('--visualise-grid-classes', type=int, default=None)
+    parser.add_argument('--visualise-grid-classes-w', type=int, default=None)
 
     args = parser.parse_args()
+
+    visualise_grid = (
+        args.visualise_grid_classes,
+        args.visualise_grid_classes_w if args.visualise_grid_classes_w else args.visualise_grid_classes
+    )
 
     img_n, obj_n, stats, lab_occ = dir_stats(
         args.dir_name,
         recursive=args.recursive,
-        visualise_grid=args.visualise_grid_classes
+        visualise_grid=visualise_grid
     )
 
     print(f'{img_n} images')
