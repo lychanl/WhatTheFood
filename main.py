@@ -48,6 +48,10 @@ def get_model(fname, mname, input_shape, output_shape):
         model = yolo.fast_yolo_net(input_shape, output_shape)
         model.initialize_weights(nn.GaussianInitializer())
         return model
+    elif mname == 'lenet_5_yolo':
+        model = yolo.lenet_5_yolo_net(input_shape, output_shape)
+        model.initialize_weights(nn.GaussianInitializer())
+        return model
     else:
         raise ValueError('Invalid model specification, failed to create')
 
