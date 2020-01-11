@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+import numpy as np
 
 
 def run(ops, placeholders_dict=None):
@@ -7,7 +8,9 @@ def run(ops, placeholders_dict=None):
     else:
         to_do = [ops]
 
-    values = dict(placeholders_dict) if placeholders_dict else {}
+    values = {}
+    for placeholder, value in placeholders_dict.items():
+        values[placeholder] = value if isinstance(value, np.ndarray) else np.array(value)
 
     while to_do:
         op = to_do[-1]
