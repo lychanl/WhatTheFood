@@ -116,7 +116,7 @@ def visualise_grids_classes(data, n_cells_h, n_cells_w):
     outs_sum = outs_sum + np.flip(outs_sum, 0) + np.flip(outs_sum, 1) + np.flip(outs_sum, (0, 1))
 
     # log color scale
-    outs_sum = np.log(outs_sum + 1)
+    outs_sum = outs_sum
 
     nrows = 3
 
@@ -133,6 +133,8 @@ def visualise_grids_classes(data, n_cells_h, n_cells_w):
         m = get_axis(i).matshow(outs_sum[:, :, 4 + i])
         plt.colorbar(m, ax=get_axis(i))
         get_axis(i).set_title(c)
+        get_axis(i).set_xticks([])
+        get_axis(i).set_yticks([])
 
     plt.show()
 

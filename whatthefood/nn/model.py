@@ -11,6 +11,7 @@ class Model(object):
         self.inputs = []
         self.grad = None
         self.non_layer_variables = []
+        self.classes = None
 
     def add(self, builder, *args, current_output_as_argument=True, set_output=True, **kwargs):
         if current_output_as_argument and self.output is not None:
