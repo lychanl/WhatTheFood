@@ -57,25 +57,26 @@ def get_model(fname, mname, input_shape, output_shape):
         raise ValueError('Invalid model specification, failed to create')
 
 
-def print_eval(ds, name, optimizer, log_file, tf_session=None):
-    stats = '\t'.join([name] + ['%0.5f' % v for v in optimizer.evaluate(ds, tf_session)])
+def print_eval(ds, name, optimizer, log_file, batch_size=None, tf_session=None):
+    out = optimizer.evaluate(ds, batch_size, tf_session=tf_session)
+    stats = '\t'.join([name] + ['%0.5f' % v for v in out])
     print(stats)
     if log_file:
         log_file.write(stats)
-        log_file.write(os.linesep)
+        log_file.write('\n')
 
 
 def run_optimizer(optimizer, steps, train_ds, eval_ds, log_file, decay, prev_steps, mb_size, ev_steps, use_tf):
     tf, tf_sess = None, None
     if use_tf:
         tf = load_tensorflow()
-        tf_sess = tf.Session()
+        tf_sess = tf.compat.v1.Session()
     try:
         with np.printoptions(precision=5):
             def log_evals():
-                print_eval(train_ds, 'train', optimizer, log_file, tf_sess)
+                print_eval(train_ds, 'train', optimizer, log_file, mb_size, tf_sess)
                 if eval_ds:
-                    print_eval(eval_ds, 'eval', optimizer, log_file, tf_sess)
+                    print_eval(eval_ds, 'eval', optimizer, log_file, mb_size, tf_sess)
 
             log_evals()
 
@@ -88,7 +89,7 @@ def run_optimizer(optimizer, steps, train_ds, eval_ds, log_file, decay, prev_ste
                     print(step_stats)
                     if log_file:
                         log_file.write(step_stats)
-                        log_file.write(os.linesep)
+                        log_file.write('\n')
 
                 log_evals()
 
@@ -131,7 +132,7 @@ if __name__ == '__main__':
     parser.add_argument('--mb_size', type=int, default=8)
     parser.add_argument('--eval_steps', type=int, default=10)
 
-    parser.add_argument('--use-tf', type=bool, default=False, action='store_const', const=True)
+    parser.add_argument('--use-tf', default=False, action='store_const', const=True)
 
     args = parser.parse_args()
 
@@ -155,6 +156,7 @@ if __name__ == '__main__':
     optimizer.add_metrics(yolo.yolo_metrics)
 
     if args.learner_file is not None and os.path.isfile(args.learner_file):
+        print(f'Loading optimizer from file: {args.learner_file}')
         with open(args.learner_file, 'rb') as lrn_state:
             optimizer.restore(lrn_state)
 
@@ -177,6 +179,7 @@ if __name__ == '__main__':
 
     if args.learner_file:
         with open(args.learner_file, 'wb') as lrn_state:
+            print(f'Saving optimizer to {args.learner_file}')
             optimizer.store(lrn_state)
 
     if log_file:

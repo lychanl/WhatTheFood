@@ -25,11 +25,11 @@ class ADAM(Minimizer):
 
     def _run(self, grads, lr_decay=1., *args, **kwargs):
         for i, (var, g) in enumerate(zip(self.vars, grads)):
-            self.m[i].value = self.m[i].value * self.beta1 + g * (1 - self.beta1)
-            self.v[i].value = self.v[i].value * self.beta2 + np.square(g) * (1 - self.beta2)
+            self.m[i] = self.m[i] * self.beta1 + g * (1 - self.beta1)
+            self.v[i] = self.v[i] * self.beta2 + np.square(g) * (1 - self.beta2)
 
-            m_corr = self.m[i].value / (1. - self.beta1)
-            v_corr = self.v[i].value / (1. - self.beta2)
+            m_corr = self.m[i] / (1. - self.beta1)
+            v_corr = self.v[i] / (1. - self.beta2)
 
             change = m_corr / (np.sqrt(v_corr) + self.eps)
             if self.limit:

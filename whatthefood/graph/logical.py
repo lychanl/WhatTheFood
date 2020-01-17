@@ -16,7 +16,7 @@ class GT(Node):
         return np.zeros_like(x), np.zeros_like(y)
 
     def _build_tf(self, tf, x, y):
-        return x > y
+        return tf.cast(x > y, tf.float32)
 
 
 class Equal(Node):
@@ -32,7 +32,7 @@ class Equal(Node):
         return np.zeros_like(x), np.zeros_like(y)
 
     def _build_tf(self, tf, x, y):
-        return x == y
+        return tf.cast(tf.equal(x, y), tf.float32)
 
 
 class ArgMax(Node):
@@ -61,5 +61,5 @@ class Negate(Node):
         return np.zeros_like(x)
 
     def _build_tf(self, tf, x):
-        return tf.logical_not(x)
+        return 1 - x
 

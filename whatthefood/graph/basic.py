@@ -227,6 +227,7 @@ class ReduceMean(Reduce):
         return np.broadcast_to(grad.reshape(self.grad_shape), x.shape) / self._get_divisor(x),
 
     def _build_tf(self, tf, x):
+        print(x)
         return tf.reduce_mean(x, self.axis)
 
 
