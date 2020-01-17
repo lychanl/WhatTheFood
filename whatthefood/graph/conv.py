@@ -45,3 +45,6 @@ class Convolution(Node):
 
         grad_x, grad_filters = conv_impl.conv2d_grad(x, filters, grad, self.step, self.padding == 'SAME')
         return grad_x if self.batched else grad_x[0], grad_filters
+
+    def _build_tf(self, tf, x, filters):
+        return tf.nn.conv2d(x, filters, strides=self.step, padding=self.padding)

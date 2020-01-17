@@ -9,5 +9,5 @@ from whatthefood.graph.activations import Sigmoid, Softmax, ReLU
 
 from whatthefood.graph.grad import Grad
 
-from whatthefood.graph.graph import run
+from whatthefood.graph.graph import run, load_tensorflow
 

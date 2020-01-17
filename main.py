@@ -10,6 +10,7 @@ import whatthefood.nn as nn
 from whatthefood.train import SGD, ADAM
 import whatthefood.classification.yolo as yolo
 from whatthefood.data.preprocessing.mb_samples_preprocessing import AddNoisePreprocessor, FlipPreprocessor
+from whatthefood.graph import load_tensorflow
 import os
 import pickle
 
@@ -56,35 +57,46 @@ def get_model(fname, mname, input_shape, output_shape):
         raise ValueError('Invalid model specification, failed to create')
 
 
-def print_eval(ds, name, optimizer, log_file):
-    stats = '\t'.join([name] + ['%0.5f' % v for v in optimizer.evaluate(ds)])
+def print_eval(ds, name, optimizer, log_file, tf_session=None):
+    stats = '\t'.join([name] + ['%0.5f' % v for v in optimizer.evaluate(ds, tf_session)])
     print(stats)
     if log_file:
         log_file.write(stats)
         log_file.write(os.linesep)
 
 
-def run_optimizer(optimizer, steps, train_ds, eval_ds, log_file, decay, prev_steps, mb_size, ev_steps):
-    with np.printoptions(precision=5):
-        def log_evals():
-            print_eval(train_ds, 'train', optimizer, log_file)
-            if eval_ds:
-                print_eval(eval_ds, 'eval', optimizer, log_file)
-
-        log_evals()
-
-        for i in range(0, steps, ev_steps):
-            for j in range(i, i + ev_steps):
-                inp, out = train_ds.get_batch(mb_size)
-                dv = 1. / np.sqrt(1. + (prev_steps + j) / 2.) if decay else 1.
-                loss = optimizer.run(inp, out, lr_decay=dv)
-                step_stats = '\t'.join(map(str, [prev_steps + j + 1, dv * optimizer.lr, loss, datetime.now()]))
-                print(step_stats)
-                if log_file:
-                    log_file.write(step_stats)
-                    log_file.write(os.linesep)
+def run_optimizer(optimizer, steps, train_ds, eval_ds, log_file, decay, prev_steps, mb_size, ev_steps, use_tf):
+    tf, tf_sess = None, None
+    if use_tf:
+        tf = load_tensorflow()
+        tf_sess = tf.Session()
+    try:
+        with np.printoptions(precision=5):
+            def log_evals():
+                print_eval(train_ds, 'train', optimizer, log_file, tf_sess)
+                if eval_ds:
+                    print_eval(eval_ds, 'eval', optimizer, log_file, tf_sess)
 
             log_evals()
+
+            for i in range(0, steps, ev_steps):
+                for j in range(i, i + ev_steps):
+                    inp, out = train_ds.get_batch(mb_size)
+                    dv = 1. / np.sqrt(1. + (prev_steps + j) / 2.) if decay else 1.
+                    loss = optimizer.run(inp, out, lr_decay=dv, tf=tf, tf_sess=tf_sess)
+                    step_stats = '\t'.join(map(str, [prev_steps + j + 1, dv * optimizer.lr, loss, datetime.now()]))
+                    print(step_stats)
+                    if log_file:
+                        log_file.write(step_stats)
+                        log_file.write(os.linesep)
+
+                log_evals()
+
+            if use_tf:
+                optimizer.update_from_tf(tf_sess)
+    finally:
+        if tf_sess:
+            tf_sess.close()
 
 
 if __name__ == '__main__':
@@ -119,6 +131,8 @@ if __name__ == '__main__':
     parser.add_argument('--mb_size', type=int, default=8)
     parser.add_argument('--eval_steps', type=int, default=10)
 
+    parser.add_argument('--use-tf', type=bool, default=False, action='store_const', const=True)
+
     args = parser.parse_args()
 
     train_ds = get_data(args.train_ds_file, args.train_ds_dir, args.hcells, args.wcells, args.scale)
@@ -152,7 +166,7 @@ if __name__ == '__main__':
     run_optimizer(
         optimizer, args.steps, train_ds, eval_ds,
         log_file, args.decay, args.prev_steps, args.mb_size,
-        args.eval_steps
+        args.eval_steps, args.use_tf
     )
 
     out_model_file = args.out_model_file if args.out_model_file else args.model_file

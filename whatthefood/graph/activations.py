@@ -15,6 +15,9 @@ class ReLU(Node):
     def backpropagate(self, grad, x):
         return (x >= 0) * grad + (x < 0) * self.alpha * grad,
 
+    def _build_tf(self, tf, x):
+        return tf.nn.relu(x) if self.alpha == 0. else tf.nn.leaky_relu()
+
 
 def leaky_relu(alpha=0.2):
     def builder(x):
@@ -33,6 +36,9 @@ class Sigmoid(Node):
     def backpropagate(self, grad, x):
         v = self.do(x)
         return v * (1 - v) * grad,
+
+    def _build_tf(self, tf, x):
+        return tf.nn.sigmoid(x)
 
 
 class Softmax(Node):
@@ -56,3 +62,6 @@ class Softmax(Node):
         common_part.resize(e.shape)
 
         return (eg * s - e * common_part) / np.square(s),
+
+    def _build_tf(self, tf, x):
+        return tf.nn.softmax(x)

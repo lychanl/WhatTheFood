@@ -48,10 +48,17 @@ class Model(object):
     def _add_input(self, obj):
         self.inputs.append(obj)
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, tf_session=None, **kwargs):
         assert len(args) + len(kwargs) == len(self.inputs)
         assert not args or not kwargs
 
         input_dict = kwargs if kwargs else {i: v for i, v in zip(self.inputs, args)}
 
-        return run(self.output, input_dict)
+        return run(self.output, input_dict, tf_session)
+
+    def update_from_tf(self, sess):
+        for v in self.variables:
+            v.update_from_tf(sess)
+
+    def clear_tf(self):
+        self.output.clear_tf()

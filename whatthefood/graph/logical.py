@@ -15,6 +15,9 @@ class GT(Node):
     def backpropagate(self, grad, x, y):
         return np.zeros_like(x), np.zeros_like(y)
 
+    def _build_tf(self, tf, x, y):
+        return x > y
+
 
 class Equal(Node):
     def __init__(self, x, y):
@@ -28,6 +31,9 @@ class Equal(Node):
     def backpropagate(self, grad, x, y):
         return np.zeros_like(x), np.zeros_like(y)
 
+    def _build_tf(self, tf, x, y):
+        return x == y
+
 
 class ArgMax(Node):
     def __init__(self, x):
@@ -40,6 +46,9 @@ class ArgMax(Node):
     def backpropagate(self, grad, x):
         return np.zeros_like(x)
 
+    def _build_tf(self, tf, x):
+        return tf.argmax(x, axis=-1)
+
 
 class Negate(Node):
     def __init__(self, x):
@@ -50,4 +59,7 @@ class Negate(Node):
 
     def backpropagate(self, grad, x):
         return np.zeros_like(x)
+
+    def _build_tf(self, tf, x):
+        return tf.logical_not(x)
 

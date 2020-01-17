@@ -147,7 +147,6 @@ def lenet_5_yolo_net(input_shape, output_shape):
     model.add(layers.Convolution, 64, 7, 1, activation=graph.ReLU)
     model.add(graph.MaxPooling2d, 2)
     model.add(layers.Convolution, 64, 7, 1, activation=graph.ReLU)
-    model.add(layers.Convolution, 256, 1, 1, activation=graph.ReLU)
     model.add(layers.Convolution, 128, 1, 1, activation=graph.ReLU)
     model.add(layers.Convolution, output_shape[-1], 1, 1)
     assert model.output.shape == output_shape, str(model.output.shape) + ' != ' + str(output_shape)

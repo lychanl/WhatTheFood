@@ -94,3 +94,11 @@ class Grad(Node):
             flattened.extend(lasts)
 
         return flattened
+
+    def _build_tf(self, tf, *inputs):
+        y_tensors = [t for i, t in zip(self.inputs, inputs) if i is self.y]
+        assert len(y_tensors) == 1
+        x_tensors = [t for x in self.xs for i, t in zip(self.inputs, inputs) if i is x]
+        assert len(x_tensors) == len(self.xs)
+        return tf.gradients(y_tensors[0], x_tensors)
+

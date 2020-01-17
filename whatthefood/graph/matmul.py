@@ -22,3 +22,6 @@ class Matmul(Node):
         return \
             np.matmul(grad, y.T),\
             np.matmul(x.T, grad) if len(x.shape) == 2 else np.matmul(x.reshape(-1, 1), grad.reshape(1, -1))
+
+    def _build_tf(self, tf, x, y):
+        return tf.matmul(x, y)

@@ -54,3 +54,6 @@ class MaxPooling2d(Node):
                 out[in_slice] += (y[out_slice] == x[in_slice]) * grad[out_slice]
 
         return out,
+
+    def _build_tf(self, tf, x):
+        return tf.nn.max_pool2d(x, self.window_size, self.step, "VALID")

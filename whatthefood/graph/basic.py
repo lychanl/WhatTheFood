@@ -23,6 +23,9 @@ class Sum(Node):
 
         return grad_x, grad_y
 
+    def _build_tf(self, tf, x, y):
+        return x + y
+
 
 class Difference(Node):
     def __init__(self, x, y):
@@ -40,6 +43,9 @@ class Difference(Node):
 
         return grad_x, grad_y
 
+    def _build_tf(self, tf, x, y):
+        return x - y
+
 
 class Reshape(Node):
     def __init__(self, x, shape):
@@ -53,14 +59,17 @@ class Reshape(Node):
     def backpropagate(self, grad, x):
         return grad.reshape(x.shape),
 
+    def _build_tf(self, tf, x):
+        return tf.reshape(x, self.shape if not self.batched else (-1, *self.shape))
+
 
 def flatten(x):
-    return Reshape(x, shape=(-1,))
+    return Reshape(x, shape=(x.size,))
 
 
 class Slice(Node):
     def __init__(self, x, id_from, id_to):
-        assert len(id_from) <= len(x.shape)
+        assert len(id_from) == len(x.shape)
         assert len(id_from) == len(id_to)
         for i_f, i_t, d in zip(id_from, id_to, x.shape):
             assert i_f >= 0
@@ -85,6 +94,17 @@ class Slice(Node):
         out[self.slice] = grad
 
         return out,
+
+    def _build_tf(self, tf, x):
+        size = [t - f for t, f in zip(self.id_to, self.id_from)]
+        if self.batched:
+            size = [-1, *size]
+
+        return tf.slice(
+            x,
+            self.id_from if not self.batched else (0, *self.id_from),
+            size
+        )
 
 
 class Concatenate(Node):
@@ -124,6 +144,9 @@ class Concatenate(Node):
     def backpropagate(self, grad, *inputs):
         return tuple(grad[s] for s in self.slices)
 
+    def _build_tf(self, tf, *inputs):
+        return tf.concat(inputs, self.axis)
+
 
 class MultiplyByScalar(Node):
     def __init__(self, x, scalar):
@@ -135,6 +158,9 @@ class MultiplyByScalar(Node):
 
     def backpropagate(self, grad, x, scalar):
         return grad * scalar, np.sum(grad * x)
+
+    def _build_tf(self, tf, x, scalar):
+        return x * scalar
 
 
 class Reduce(Node):
@@ -182,6 +208,9 @@ class ReduceSum(Reduce):
     def backpropagate(self, grad, x):
         return np.broadcast_to(grad.reshape(self.grad_shape), x.shape),
 
+    def _build_tf(self, tf, x):
+        return tf.reduce_sum(x, self.axis)
+
 
 class ReduceMean(Reduce):
     def do(self, x):
@@ -197,6 +226,9 @@ class ReduceMean(Reduce):
     def backpropagate(self, grad, x):
         return np.broadcast_to(grad.reshape(self.grad_shape), x.shape) / self._get_divisor(x),
 
+    def _build_tf(self, tf, x):
+        return tf.reduce_mean(x, self.axis)
+
 
 class Square(Node):
     def __init__(self, x):
@@ -207,6 +239,9 @@ class Square(Node):
 
     def backpropagate(self, grad, x):
         return 2 * x * grad,
+
+    def _build_tf(self, tf, x):
+        return tf.square(x)
 
 
 class Multiply(Node):
@@ -232,6 +267,9 @@ class Multiply(Node):
 
         return xg, yg
 
+    def _build_tf(self, tf, x, y):
+        return x * y
+
 
 class Divide(Node):
     def __init__(self, x, y):
@@ -244,3 +282,6 @@ class Divide(Node):
 
     def backpropagate(self, grad, x, y):
         return grad / y, -(grad * x) / np.square(y)
+
+    def _build_tf(self, tf, x, y):
+        return x / y

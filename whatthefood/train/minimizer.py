@@ -17,6 +17,9 @@ class Minimizer(object):
         self.vars = model.variables
         self.grad = Grad(self.loss, self.model.variables)
 
+        self.eval_tensor = None
+        self.opt_tensor = None
+
     def get_input_dict(self, inputs, expected_output):
         input_dict = None
         if inputs is None:
@@ -45,24 +48,67 @@ class Minimizer(object):
             else:
                 self.metrics.append(m)
 
-    def run(self, inputs, expected_output, *args, **kwargs):
+    def run(self, inputs, expected_output, *args, tf=None, tf_session=None, **kwargs):
         input_dict = self.get_input_dict(inputs, expected_output)
 
-        loss, grads = run((self.loss, self.grad), input_dict)
+        if not tf_session or not tf:
+            loss, grads = run((self.loss, self.grad), input_dict)
 
-        self._run(grads, *args, **kwargs)
+            self._run(grads, *args, **kwargs)
 
-        return loss
+            return loss
+        else:
+            input_dict = {p.build_tf(tf, tf_session): v for p, v in input_dict.items()}
+            opt_tensor = self.get_tf_opt(tf, tf_session, *args, **kwargs)
+            loss, _ = tf_session.run(opt_tensor, input_dict)
+            return loss
+
 
     def _run(self, grads, *args, **kwargs):
         raise NotImplementedError
 
-    def evaluate(self, ds):
-        input_dict = self.get_input_dict(ds.inputs, ds.outputs)
-        return run(self.metrics, input_dict)
+    def evaluate(self, ds, batch_size=None, tf_session=None):
+        if not batch_size:
+            batch_size = len(ds)
+        total_metrics = [0 for _ in self.metrics]
+        for i in range(0, len(ds), batch_size):
+            size = min(batch_size, len(ds) - i)
+            batch = slice(i, i + batch_size)
+
+            input_dict = self.get_input_dict(ds.inputs[batch], ds.outputs[batch])
+            m = run(self.metrics, input_dict, tf_sess=tf_session)
+            for i, v in enumerate(m):
+                total_metrics[i] += v * size
+
+        return [v / len(ds) for v in total_metrics]
 
     def store(self, file):
         pass
 
     def restore(self, file):
+        pass
+
+    def get_tf_opt(self, tf, sess, *args, **kwargs):
+        if self.opt_tensor is None:
+            grad_ops = self.grad.build_tf(tf, sess)
+            loss_op = self.loss.build_tf(tf, sess)
+            self.opt_tensor = (loss_op, self._build_tf_opt(grad_ops, tf, sess, *args, **kwargs))
+
+        return self.opt_tensor
+
+    def _build_tf_opt(self, grads, tf, sess, *args, **kwargs):
+        raise NotImplementedError
+
+    def update_from_tf(self, sess):
+        self.model.update_from_tf(sess)
+        self._update_internal_from_tf(sess)
+
+    def _update_internal_from_tf(self, sess):
+        pass
+
+    def clear_tf(self):
+        self.model.clear_tf()
+        self.opt_tensor = None
+
+    def _clear_internal_tf(self):
         pass
