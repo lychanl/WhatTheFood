@@ -35,5 +35,5 @@ class TestActivations(unittest.TestCase):
         x = graph.Constant(x_arr)
         y = graph.Softmax(x)
 
-        s = np.repeat(np.sum(np.exp(x_arr), axis=-1), x_arr.shape[-1]).reshape(x_arr.shape)
-        np.testing.assert_array_equal(np.exp(x_arr) / s, graph.run(y))
+        s = np.repeat(np.sum(np.exp(x_arr - [[3], [-1]]), axis=-1), x_arr.shape[-1]).reshape(x_arr.shape)
+        np.testing.assert_array_equal(np.exp(x_arr - [[3], [-1]]) / s, graph.run(y))

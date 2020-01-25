@@ -1,2 +1,3 @@
 from whatthefood.data.preprocessing.preprocessor import Preprocessor
 from whatthefood.data.preprocessing.scaling import ScalePreprocessor
+from whatthefood.data.preprocessing.mb_samples_preprocessing import yolo_flip_out

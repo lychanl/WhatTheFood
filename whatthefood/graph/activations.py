@@ -47,14 +47,15 @@ class Softmax(Node):
         super(Softmax, self).__init__(x.shape, x.batched, x)
 
     def do(self, x):
-        e = np.exp(x)
-        s = np.repeat(np.sum(e, axis=-1), e.shape[-1]).reshape(e.shape)
-        s.resize(e.shape)
+        m = np.max(x, axis=-1).reshape((*x.shape[:-1], 1))
+        e = np.exp(x - m)
+        s = np.resize(np.sum(e, axis=-1), (*x.shape[:-1], 1))
         return e / s
 
     def backpropagate(self, grad, x):
-        e = np.exp(x)
-        s = np.repeat(np.sum(e, axis=-1), e.shape[-1]).reshape(e.shape)
+        m = np.max(x, axis=-1).reshape((*x.shape[:-1], 1))
+        e = np.exp(x - m)
+        s = np.resize(np.sum(e, axis=-1), (*x.shape[:-1], 1))
 
         eg = e * grad
 

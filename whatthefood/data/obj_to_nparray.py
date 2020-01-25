@@ -104,7 +104,8 @@ def get_output(annotation, classes, n_cells_h, n_cells_w):
 
 
 def get_objects_from_output(output, img_size, classes, ncells):
-    cells = get_cells(img_size[:2], ncells, ncells)
+    # cells = get_cells(img_size[:2], ncells, ncells)
+    cells = get_cells(img_size[:2], output.shape[-3], output.shape[-2])
 
     def cell_size(d, i):
         return cells[d][0] if i == 0 else cells[d][i] - cells[d][i - 1]

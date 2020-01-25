@@ -4,8 +4,9 @@ import numpy as np
 import argparse
 
 from whatthefood.data.xml_to_obj import parse_file
-from whatthefood.data.obj_to_nparray import get_objects_from_output, load_input_image
-from whatthefood.data.preprocessing import ScalePreprocessor
+from whatthefood.data.obj_to_nparray import get_objects_from_output, load_input_image, get_output, get_classes
+from whatthefood.data.preprocessing import ScalePreprocessor, yolo_flip_out
+from whatthefood.classification.utils import get_output_mean_with_flipped
 
 
 def visualise_objects(ax, objects, color, scale=None):
@@ -47,6 +48,8 @@ parser.add_argument('img')
 
 args = parser.parse_args()
 
+flips = False
+
 model = None
 preprocessor = None
 scale = None
@@ -73,7 +76,10 @@ if model:
             ds = pickle.load(file)
 
     classes = list(range(model.output.shape[2] - 5)) if not ds else ds.classes
-    out = model([img])[0]
+    if flips:
+        out = get_output_mean_with_flipped(model, [img])[0]
+    else:
+        out = model([img])[0]
 
     yolo_out_annot = get_objects_from_output(out, img.shape[:2], classes, 12)
 
