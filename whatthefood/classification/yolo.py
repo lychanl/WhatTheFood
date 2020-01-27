@@ -139,7 +139,6 @@ def lenet_7_yolo_net(input_shape, output_shape):
 def lenet_5_yolo_net(input_shape, output_shape):
     model = Model()
     model.add(graph.Placeholder, input_shape, batched=True)
-    model.add(layers.Convolution, 8, 1, 1, activation=graph.ReLU)
     model.add(layers.Convolution, 16, 5, 1, activation=graph.ReLU)
     model.add(graph.MaxPooling2d, 2)
     model.add(layers.Convolution, 32, 5, 1, activation=graph.ReLU)
@@ -147,9 +146,7 @@ def lenet_5_yolo_net(input_shape, output_shape):
     model.add(layers.Convolution, 64, 7, 1, activation=graph.ReLU)
     model.add(graph.MaxPooling2d, 2)
     model.add(layers.Convolution, 64, 7, 1, activation=graph.ReLU)
-    model.add(layers.Convolution, 64, 3, 1, activation=graph.ReLU, padding='SAME')
-    model.add(layers.Convolution, 128, 3, 1, activation=graph.ReLU, padding='SAME')
-    model.add(layers.Convolution, 128, 1, 1, activation=graph.ReLU)
+    model.add(layers.Convolution, 64, 1, 1, activation=graph.ReLU)
     model.add(layers.Convolution, 64, 1, 1, activation=graph.ReLU)
     model.add(layers.Convolution, output_shape[-1], 1, 1)
     assert model.output.shape == output_shape, str(model.output.shape) + ' != ' + str(output_shape)

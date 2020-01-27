@@ -39,9 +39,11 @@ def visualise_img_and_annot(img, objects, annot_objects, scale=None):
     plt.show()
 
 
-def visualise_data(img, expected_out, model_out, classes):
-    yolo_out_objs = get_objects_from_output(model_out, img.shape[:2], classes) if model_out is not None else None
-    yolo_exp_objs = get_objects_from_output(expected_out, img.shape[:2], classes) if expected_out is not None else None
+def visualise_data(img, expected_out, model_out, classes, threshold=0.5):
+    yolo_out_objs = get_objects_from_output(model_out, img.shape[:2], classes, threshold)\
+        if model_out is not None else None
+    yolo_exp_objs = get_objects_from_output(expected_out, img.shape[:2], classes, threshold)\
+        if expected_out is not None else None
 
     visualise_img_and_annot(img, yolo_out_objs, yolo_exp_objs)
 
