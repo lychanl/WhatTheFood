@@ -84,7 +84,8 @@ def run_optimizer(optimizer, steps, train_ds, eval_ds, log_file, decay, prev_ste
                 for j in range(i, i + ev_steps):
                     inp, out = train_ds.get_batch(mb_size)
                     dv = 1. / np.sqrt(1. + (prev_steps + j) / 2.) if decay else 1.
-                    loss = optimizer.run(inp, out, lr_decay=dv, tf=tf, tf_sess=tf_sess)
+                    kwargs = {'lr_decay': dv} if decay else {}
+                    loss = optimizer.run(inp, out, tf=tf, tf_session=tf_sess, **kwargs)
                     step_stats = '\t'.join(map(str, [prev_steps + j + 1, dv * optimizer.lr, loss, datetime.now()]))
                     print(step_stats)
                     if log_file:
@@ -121,6 +122,8 @@ if __name__ == '__main__':
     parser.add_argument('--learner', type=str, default='ADAM', choices=['ADAM', 'SGD'])
     parser.add_argument('--learner_file', type=str, default=None)
 
+    parser.add_argument('--l2', type=float, required=False, default=None)
+
     parser.add_argument('--noobj_w', type=float, default=0.5)
     parser.add_argument('--bb_w', type=float, default=5)
 
@@ -147,8 +150,8 @@ if __name__ == '__main__':
 
     optimizer = (ADAM if args.learner == 'ADAM' else SGD)(
         model, functools.partial(
-            yolo.yolo_loss, noobj_weight=args.noobj_w, bounding_boxes_weight=args.bb_w
-        ), limit=args.limit, lr=args.lr
+            yolo.yolo_loss, noobj_weight=args.noobj_w, bounding_boxes_weight=args.bb_w,
+        ), limit=args.limit, lr=args.lr, regularization=args.l2
     )
 
     optimizer.add_metrics(optimizer.loss.inputs[0].inputs)

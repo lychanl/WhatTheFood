@@ -103,8 +103,7 @@ def get_output(annotation, classes, n_cells_h, n_cells_w):
     return out
 
 
-def get_objects_from_output(output, img_size, classes, ncells):
-    # cells = get_cells(img_size[:2], ncells, ncells)
+def get_objects_from_output(output, img_size, classes, threshold=0.5):
     cells = get_cells(img_size[:2], output.shape[-3], output.shape[-2])
 
     def cell_size(d, i):
@@ -132,7 +131,7 @@ def get_objects_from_output(output, img_size, classes, ncells):
 
     return [
         out_to_obj(cell, i, j)
-        for i, col in enumerate(output) for j, cell in enumerate(col) if cell[0] > 0.5
+        for i, col in enumerate(output) for j, cell in enumerate(col) if cell[0] >= threshold
     ]
 
 

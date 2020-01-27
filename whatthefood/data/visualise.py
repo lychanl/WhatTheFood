@@ -4,8 +4,8 @@ import numpy as np
 import argparse
 
 from whatthefood.data.xml_to_obj import parse_file
-from whatthefood.data.obj_to_nparray import get_objects_from_output, load_input_image, get_output, get_classes
-from whatthefood.data.preprocessing import ScalePreprocessor, yolo_flip_out
+from whatthefood.data.obj_to_nparray import get_objects_from_output, load_input_image
+from whatthefood.data.preprocessing import ScalePreprocessor
 from whatthefood.classification.utils import get_output_mean_with_flipped
 
 
@@ -39,48 +39,56 @@ def visualise_img_and_annot(img, objects, annot_objects, scale=None):
     plt.show()
 
 
-parser = argparse.ArgumentParser()
+def visualise_data(img, expected_out, model_out, classes):
+    yolo_out_objs = get_objects_from_output(model_out, img.shape[:2], classes) if model_out is not None else None
+    yolo_exp_objs = get_objects_from_output(expected_out, img.shape[:2], classes) if expected_out is not None else None
 
-parser.add_argument('--model', action='store', type=str, default=None, required=False)
-parser.add_argument('--model-classes-from', action='store', type=str, default=None, required=False)
-parser.add_argument('--annotation', action='store_const', const=True, default=False)
-parser.add_argument('img')
+    visualise_img_and_annot(img, yolo_out_objs, yolo_exp_objs)
 
-args = parser.parse_args()
 
-flips = False
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
 
-model = None
-preprocessor = None
-scale = None
-if args.model:
-    with open(args.model, 'rb') as file:
-        model = pickle.load(file)
-    scale = 2340 // model.inputs[0].shape[0]
-    assert scale == 4160 // model.inputs[0].shape[1]
-    preprocessor = ScalePreprocessor(scale, np.mean)
+    parser.add_argument('--model', action='store', type=str, default=None, required=False)
+    parser.add_argument('--model-classes-from', action='store', type=str, default=None, required=False)
+    parser.add_argument('--annotation', action='store_const', const=True, default=False)
+    parser.add_argument('img')
 
-if not args.annotation:
-    annot = None
-    img = load_input_image(args.img, preprocessor)
-else:
-    annot = parse_file(args.img)
-    img = load_input_image(annot.img_path, preprocessor)
+    args = parser.parse_args()
 
-yolo_out_annot = None
+    flips = False
 
-if model:
-    ds = None
-    if args.model_classes_from:
-        with open(args.model_classes_from, 'rb') as file:
-            ds = pickle.load(file)
+    model = None
+    preprocessor = None
+    scale = None
+    if args.model:
+        with open(args.model, 'rb') as file:
+            model = pickle.load(file)
+        scale = 2340 // model.inputs[0].shape[0]
+        assert scale == 4160 // model.inputs[0].shape[1]
+        preprocessor = ScalePreprocessor(scale, np.mean)
 
-    classes = list(range(model.output.shape[2] - 5)) if not ds else ds.classes
-    if flips:
-        out = get_output_mean_with_flipped(model, [img])[0]
+    if not args.annotation:
+        annot = None
+        img = load_input_image(args.img, preprocessor)
     else:
-        out = model([img])[0]
+        annot = parse_file(args.img)
+        img = load_input_image(annot.img_path, preprocessor)
 
-    yolo_out_annot = get_objects_from_output(out, img.shape[:2], classes, 12)
+    yolo_out_annot = None
 
-visualise_img_and_annot(img, yolo_out_annot, annot.objects, scale)
+    if model:
+        ds = None
+        if args.model_classes_from:
+            with open(args.model_classes_from, 'rb') as file:
+                ds = pickle.load(file)
+
+        classes = list(range(model.output.shape[2] - 5)) if not ds else ds.classes
+        if flips:
+            out = get_output_mean_with_flipped(model, [img])[0]
+        else:
+            out = model([img])[0]
+
+        yolo_out_annot = get_objects_from_output(out, img.shape[:2], classes)
+
+    visualise_img_and_annot(img, yolo_out_annot, annot.objects, scale)

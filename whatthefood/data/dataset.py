@@ -20,8 +20,8 @@ class Dataset(object):
     def get_batch(self, size):
         samples = np.random.random_integers(0, len(self.inputs) - 1, size)
 
-        inputs = np.ndarray((size,) + self.inputs[0].shape)
-        outputs = np.ndarray((size,) + self.outputs[0].shape)
+        inputs = np.ndarray((size,) + self.inputs[0].shape, dtype=np.float32)
+        outputs = np.ndarray((size,) + self.outputs[0].shape, dtype=np.float32)
 
         for i, s in enumerate(samples):
             inp = self.inputs[s]

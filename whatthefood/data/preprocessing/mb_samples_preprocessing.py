@@ -16,16 +16,11 @@ class AddNoisePreprocessor(object):
 
 def yolo_flip_out(out, axis):
     new_out = np.flip(np.copy(out), axis=axis)
-
-    if len(out.shape) == 3 and axis == 0:
+    if axis == 0:
         new_out[:,:,1] = 1 - new_out[:,:,1]
-    elif len(out.shape) == 4 and axis == 1:
-        new_out[:,:,:,1] = 1 - new_out[:,:,:,1]
 
-    elif len(out.shape) == 3 and axis == 1:
+    if axis == 1:
         new_out[:,:,2] = 1 - new_out[:,:,2]
-    elif len(out.shape) == 4 and axis == 2:
-        new_out[:,:,:,2] = 1 - new_out[:,:,:,2]
 
     return new_out
 

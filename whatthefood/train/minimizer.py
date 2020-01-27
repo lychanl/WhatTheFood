@@ -2,23 +2,39 @@ from collections.abc import Sequence
 
 import numpy as np
 
-from whatthefood.graph import Grad, Placeholder, run
+from whatthefood.graph import Grad, Placeholder, run, Sum, Square, Multiply, Constant, ReduceSum
 from whatthefood.graph.node import Node
 
 
 class Minimizer(object):
-    def __init__(self, model, loss):
+    def __init__(self, model, loss, regularization=None):
         self.expected_output = Placeholder(model.output.shape, model.output.batched)
         self.loss = loss(self.expected_output, model.output)
+
         self.model = model
 
         self.metrics = [self.loss]
 
         self.vars = model.variables
-        self.grad = Grad(self.loss, self.model.variables)
 
         self.eval_tensor = None
         self.opt_tensor = None
+
+        self.total_loss = Sum(self.loss, Multiply(self.create_regularization(), Constant(regularization)))\
+            if regularization else self.loss
+        self.grad = Grad(self.total_loss, self.model.variables)
+
+
+    def create_regularization(self):
+        regularization = None
+        for v in self.vars:
+            if regularization is None:
+                regularization = ReduceSum(Square(v))
+            else:
+                regularization = Sum(ReduceSum(Square(v)), regularization)
+
+        return regularization
+
 
     def get_input_dict(self, inputs, expected_output):
         input_dict = None
@@ -58,6 +74,8 @@ class Minimizer(object):
 
             return loss
         else:
+            if kwargs:
+                raise NotImplementedError
             input_dict = {p.build_tf(tf, tf_session): v for p, v in input_dict.items()}
             opt_tensor = self.get_tf_opt(tf, tf_session, *args, **kwargs)
             loss, _ = tf_session.run(opt_tensor, input_dict)
